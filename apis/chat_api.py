@@ -1,4 +1,7 @@
+import argparse
 import uvicorn
+import sys
+
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
@@ -76,7 +79,44 @@ class ChatAPIApp:
             )(self.chat_completions)
 
 
+class ArgParser(argparse.ArgumentParser):
+    def __init__(self, *args, **kwargs):
+        super(ArgParser, self).__init__(*args, **kwargs)
+
+        self.add_argument(
+            "-s",
+            "--server",
+            type=str,
+            default="0.0.0.0",
+            help="Server IP for HF LLM Chat API",
+        )
+        self.add_argument(
+            "-p",
+            "--port",
+            type=int,
+            default=23333,
+            help="Server Port for HF LLM Chat API",
+        )
+
+        self.add_argument(
+            "-d",
+            "--dev",
+            default=False,
+            action="store_true",
+            help="Run in dev mode",
+        )
+
+        self.args = self.parse_args(sys.argv[1:])
+
+
 app = ChatAPIApp().app
 
 if __name__ == "__main__":
-    uvicorn.run("__main__:app", host="0.0.0.0", port=23333, reload=True)
+    args = ArgParser().args
+    if args.dev:
+        uvicorn.run("__main__:app", host=args.server, port=args.port, reload=True)
+    else:
+        uvicorn.run("__main__:app", host=args.server, port=args.port, reload=False)
+
+    # python -m apis.chat_api      # [Docker] on product mode
+    # python -m apis.chat_api -d   # [Dev]    on develop mode

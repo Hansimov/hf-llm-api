@@ -4,7 +4,6 @@ import requests
 from messagers.message_outputer import OpenaiStreamOutputer
 from utils.logger import logger
 from utils.enver import enver
-from huggingface_hub import InferenceClient
 
 
 class MessageStreamer:
