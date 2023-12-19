@@ -42,7 +42,7 @@ class MessageStreamer:
         self.request_body = {
             "inputs": prompt,
             "parameters": {
-                "temperature": temperature,
+                "temperature": max(temperature, 0.01),  # must be positive
                 "max_new_tokens": max_new_tokens,
                 "return_full_text": False,
             },
