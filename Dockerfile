@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 WORKDIR $HOME/app
-COPY requirements.txt .
+COPY . .
 RUN pip install -r requirements.txt
 VOLUME /data
 EXPOSE 23333
