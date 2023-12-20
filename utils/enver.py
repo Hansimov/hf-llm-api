@@ -1,8 +1,8 @@
 import json
-import requests
 import os
 
 from pathlib import Path
+from utils.logger import logger
 
 
 class OSEnver:
@@ -15,8 +15,6 @@ class OSEnver:
 
     def restore_envs(self):
         self.envs = self.envs_stack.pop()
-        if self.global_scope:
-            os.environ = self.envs
 
     def set_envs(self, secrets=True, proxies=None, store_envs=True):
         # caller_info = inspect.stack()[1]
@@ -55,7 +53,8 @@ class OSEnver:
             "https": self.proxy,
         }
 
-        print(f"Using proxy: [{self.proxy}]")
+        if self.proxy:
+            logger.note(f"Using proxy: [{self.proxy}]")
 
 
 enver = OSEnver()

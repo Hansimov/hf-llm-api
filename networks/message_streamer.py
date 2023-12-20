@@ -60,7 +60,7 @@ class MessageStreamer:
             },
             "stream": stream,
         }
-        print(self.request_url)
+        logger.back(self.request_url)
         enver.set_envs(proxies=True)
         stream = requests.post(
             self.request_url,
