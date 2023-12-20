@@ -42,7 +42,11 @@ class MessageStreamer:
         self.request_headers = {
             "Content-Type": "application/json",
         }
-        # huggingface_hub/inference/_client.py: class InferenceClient > def text_generation()
+        # References:
+        #   huggingface_hub/inference/_client.py:
+        #     class InferenceClient > def text_generation()
+        #   huggingface_hub/inference/_text_generation.py:
+        #     class TextGenerationRequest > param `stream`
         self.request_body = {
             "inputs": prompt,
             "parameters": {
@@ -70,7 +74,7 @@ class MessageStreamer:
 
             if content.strip() == "</s>":
                 content_type = "Finished"
-                logger.mesg("\n[Finished]")
+                logger.success("\n[Finished]")
             else:
                 content_type = "Completions"
                 logger.mesg(content, end="")
