@@ -9,11 +9,15 @@ from utils.enver import enver
 class MessageStreamer:
     MODEL_MAP = {
         "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+        "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     }
 
     def __init__(self, model: str):
-        self.model = model
-        self.model_fullname = self.MODEL_MAP[model]
+        if model in self.MODEL_MAP.keys():
+            self.model = model
+        else:
+            self.model = "default"
+        self.model_fullname = self.MODEL_MAP[self.model]
 
     def parse_line(self, line):
         line = line.decode("utf-8")
@@ -26,7 +30,7 @@ class MessageStreamer:
         self,
         prompt: str = None,
         temperature: float = 0.01,
-        max_new_tokens: int = 32000,
+        max_new_tokens: int = 8192,
         stream: bool = True,
         yield_output: bool = False,
     ):

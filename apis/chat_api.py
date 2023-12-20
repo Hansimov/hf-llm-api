@@ -43,7 +43,7 @@ class ChatAPIApp:
             description="(float) Temperature",
         )
         max_tokens: int = Field(
-            default=32000,
+            default=8192,
             description="(int) Max tokens",
         )
         stream: bool = Field(
