@@ -24,7 +24,15 @@ class ChatAPIApp:
         self.available_models = [
             {
                 "id": "mixtral-8x7b",
-                "description": "Mixtral-8x7B: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1",
+                "description": "[Mixtral-8x7B-Instruct-v0.1]: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1",
+            },
+            {
+                "id": "mistral-7b",
+                "description": "[Mistral-7B-Instruct-v0.2]: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2",
+            },
+            {
+                "id": "openchat-3.5",
+                "description": "[openchat_3.5]: https://huggingface.co/openchat/openchat_3.5",
             },
         ]
         return self.available_models

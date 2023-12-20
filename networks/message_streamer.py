@@ -8,7 +8,11 @@ from utils.enver import enver
 
 class MessageStreamer:
     MODEL_MAP = {
-        "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+        "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",  # 72.62, fast [Recommended]
+        "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.2",  # 65.71, fast
+        "openchat-3.5": "openchat/openchat_3.5",  # 61.24, fast
+        # "zephyr-7b-alpha": "HuggingFaceH4/zephyr-7b-alpha",  # 59.5, fast
+        # "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",  # 61.95, slow
         "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     }
 
