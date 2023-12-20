@@ -33,7 +33,7 @@ def add_fillers(text, filler="=", fill_side="both"):
     return filled_str
 
 
-class Logger:
+class OSLogger(logging.Logger):
     LOG_METHODS = {
         "err": ("error", "red"),
         "warn": ("warning", "light_red"),
@@ -75,8 +75,8 @@ class Logger:
             module = inspect.getmodule(frame[0])
             name = module.__name__
 
-        self.logger = logging.getLogger(name)
-        self.logger.setLevel(logging.INFO)
+        super().__init__(name)
+        self.setLevel(logging.INFO)
 
         if prefix:
             formatter_prefix = "[%(asctime)s] - [%(name)s] - [%(levelname)s]\n"
@@ -85,19 +85,16 @@ class Logger:
 
         self.formatter = logging.Formatter(formatter_prefix + "%(message)s")
 
-        self.handler = logging.StreamHandler()
-        self.handler.setLevel(logging.INFO)
-
-        self.handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.handler)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.INFO)
+        stream_handler.setFormatter(self.formatter)
+        self.addHandler(stream_handler)
 
         self.log_indent = 0
         self.log_indents = []
 
         self.log_level = "info"
         self.log_levels = []
-
-        self.bind_functions()
 
     def indent(self, indent=2):
         self.log_indent += indent
@@ -116,7 +113,7 @@ class Logger:
 
     def set_level(self, level):
         self.log_level = level
-        self.logger.setLevel(self.LEVEL_NAMES[level])
+        self.setLevel(self.LEVEL_NAMES[level])
 
     def store_level(self):
         self.log_levels.append(self.log_level)
@@ -139,7 +136,8 @@ class Logger:
 
     def log(
         self,
-        method,
+        level,
+        color,
         msg,
         indent=0,
         fill=False,
@@ -162,24 +160,44 @@ class Logger:
         if fill:
             indented_msg = add_fillers(indented_msg, fill_side=fill_side)
 
-        handler = self.logger.handlers[0]
+        handler = self.handlers[0]
         handler.terminator = end
 
-        level, color = self.LOG_METHODS[method]
-        getattr(self.logger, level)(colored(indented_msg, color), *args, **kwargs)
+        getattr(self, level)(colored(indented_msg, color), *args, **kwargs)
 
-    def bind_functions(self):
-        for method in self.LOG_METHODS:
-            setattr(self.logger, method, functools.partial(self.log, method))
+    def route_log(self, method, msg, *args, **kwargs):
+        level, method = method
+        functools.partial(self.log, level, method, msg)(*args, **kwargs)
 
-        for method in self.INDENT_METHODS:
-            setattr(self.logger, method, getattr(self, method))
+    def err(self, msg: str = "", *args, **kwargs):
+        self.route_log(("error", "red"), msg, *args, **kwargs)
 
-        for method in self.LEVEL_METHODS:
-            setattr(self.logger, method, getattr(self, method))
+    def warn(self, msg: str = "", *args, **kwargs):
+        self.route_log(("warning", "light_red"), msg, *args, **kwargs)
+
+    def note(self, msg: str = "", *args, **kwargs):
+        self.route_log(("info", "light_magenta"), msg, *args, **kwargs)
+
+    def mesg(self, msg: str = "", *args, **kwargs):
+        self.route_log(("info", "light_cyan"), msg, *args, **kwargs)
+
+    def file(self, msg: str = "", *args, **kwargs):
+        self.route_log(("info", "light_blue"), msg, *args, **kwargs)
+
+    def line(self, msg: str = "", *args, **kwargs):
+        self.route_log(("info", "white"), msg, *args, **kwargs)
+
+    def success(self, msg: str = "", *args, **kwargs):
+        self.route_log(("info", "light_green"), msg, *args, **kwargs)
+
+    def fail(self, msg: str = "", *args, **kwargs):
+        self.route_log(("info", "light_red"), msg, *args, **kwargs)
+
+    def back(self, msg: str = "", *args, **kwargs):
+        self.route_log(("debug", "light_cyan"), msg, *args, **kwargs)
 
 
-logger = Logger().logger
+logger = OSLogger()
 
 
 def shell_cmd(cmd, getoutput=False, showcmd=True, env=None):

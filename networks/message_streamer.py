@@ -65,7 +65,12 @@ class MessageStreamer:
             proxies=enver.requests_proxies,
             stream=stream,
         )
-        print(stream.status_code)
+        status_code = stream.status_code
+        if status_code == 200:
+            logger.success(status_code)
+        else:
+            logger.err(status_code)
+
         for line in stream.iter_lines():
             if not line:
                 continue
@@ -77,7 +82,7 @@ class MessageStreamer:
                 logger.success("\n[Finished]")
             else:
                 content_type = "Completions"
-                logger.mesg(content, end="")
+                logger.back(content, end="")
 
             if yield_output:
                 output = self.message_outputer.output(
