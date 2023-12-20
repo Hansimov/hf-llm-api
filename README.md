@@ -8,23 +8,21 @@ app_port: 23333
 ---
 
 ## HF-LLM-API
-API for LLM inference in Huggingface spaces.
-
+Huggingface LLM Inference API in OpenAI message format.
 
 ## Features
 
 ✅ Implemented:
 
 - Support Models
-  - `mixtral-8x7b`
+  - `mixtral-8x7b`, `mistral-7b`
 - Support OpenAI API format
   - Can use api endpoint via official `openai-python` package
-- Support stream response
-- Support infinite-round chat
-- Support Docker deployment
+- Stream response
+- Docker deployment
 
 🔨 In progress:
-- [ ] Support more models
+- [x] Support more models
 
 ## Run API service
 
