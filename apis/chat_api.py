@@ -4,10 +4,11 @@ import sys
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from sse_starlette.sse import EventSourceResponse
+from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 from utils.logger import logger
 from networks.message_streamer import MessageStreamer
 from messagers.message_composer import MessageComposer
+from mocks.stream_chat_mocker import stream_chat_mock
 
 
 class ChatAPIApp:
@@ -63,7 +64,7 @@ class ChatAPIApp:
         streamer = MessageStreamer(model=item.model)
         composer = MessageComposer(model=item.model)
         composer.merge(messages=item.messages)
-        return EventSourceResponse(
+        event_source_response = EventSourceResponse(
             streamer.chat(
                 prompt=composer.merged_str,
                 temperature=item.temperature,
@@ -72,7 +73,10 @@ class ChatAPIApp:
                 yield_output=True,
             ),
             media_type="text/event-stream",
+            ping=2000,
+            ping_message_factory=lambda: ServerSentEvent(**{"comment": ""}),
         )
+        return event_source_response
 
     def setup_routes(self):
         for prefix in ["", "/v1"]:
