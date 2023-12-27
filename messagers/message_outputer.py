@@ -7,20 +7,22 @@ class OpenaiStreamOutputer:
     * https://platform.openai.com/docs/api-reference/chat/create
     """
 
-    def data_to_string(self, data={}, content_type=""):
-        data_str = f"{json.dumps(data)}"
-
-        return data_str
-
-    def output(self, content=None, content_type="Completions") -> str:
-        data = {
+    def __init__(self):
+        self.default_data = {
             "created": 1700000000,
             "id": "chatcmpl-hugginface",
             "object": "chat.completion.chunk",
-            # "content_type": content_type,
+            # "content_type": "Completions",
             "model": "hugginface",
             "choices": [],
         }
+
+    def data_to_string(self, data={}, content_type=""):
+        data_str = f"{json.dumps(data)}"
+        return data_str
+
+    def output(self, content=None, content_type="Completions") -> str:
+        data = self.default_data.copy()
         if content_type == "Role":
             data["choices"] = [
                 {

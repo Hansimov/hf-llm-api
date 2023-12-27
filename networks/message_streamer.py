@@ -31,13 +31,11 @@ class MessageStreamer:
         content = data["token"]["text"]
         return content
 
-    def chat(
+    def chat_response(
         self,
         prompt: str = None,
         temperature: float = 0.01,
         max_new_tokens: int = 8192,
-        stream: bool = True,
-        yield_output: bool = False,
     ):
         # https://huggingface.co/docs/api-inference/detailed_parameters?code=curl
         # curl --proxy http://<server>:<port> https://api-inference.huggingface.co/models/<org>/<model_name> -X POST -d '{"inputs":"who are you?","parameters":{"max_new_token":64}}' -H 'Content-Type: application/json' -H 'Authorization: Bearer <HF_TOKEN>'
@@ -60,24 +58,57 @@ class MessageStreamer:
                 "max_new_tokens": max_new_tokens,
                 "return_full_text": False,
             },
-            "stream": stream,
+            "stream": True,
         }
         logger.back(self.request_url)
         enver.set_envs(proxies=True)
-        stream = requests.post(
+        stream_response = requests.post(
             self.request_url,
             headers=self.request_headers,
             json=self.request_body,
             proxies=enver.requests_proxies,
-            stream=stream,
+            stream=True,
         )
-        status_code = stream.status_code
+        status_code = stream_response.status_code
         if status_code == 200:
             logger.success(status_code)
         else:
             logger.err(status_code)
 
-        for line in stream.iter_lines():
+        return stream_response
+
+    def chat_return_dict(self, stream_response):
+        # https://platform.openai.com/docs/guides/text-generation/chat-completions-response-format
+        final_output = self.message_outputer.default_data.copy()
+        final_output["choices"] = [
+            {
+                "index": 0,
+                "finish_reason": "stop",
+                "message": {
+                    "role": "assistant",
+                    "content": "",
+                },
+            }
+        ]
+        logger.back(final_output)
+
+        for line in stream_response.iter_lines():
+            if not line:
+                continue
+            content = self.parse_line(line)
+
+            if content.strip() == "</s>":
+                logger.success("\n[Finished]")
+                break
+            else:
+                logger.back(content, end="")
+                final_output["choices"][0]["message"]["content"] += content
+
+        return final_output
+
+    def chat_return_generator(self, stream_response):
+        is_finished = False
+        for line in stream_response.iter_lines():
             if not line:
                 continue
 
@@ -86,12 +117,15 @@ class MessageStreamer:
             if content.strip() == "</s>":
                 content_type = "Finished"
                 logger.success("\n[Finished]")
+                is_finished = True
             else:
                 content_type = "Completions"
                 logger.back(content, end="")
 
-            if yield_output:
-                output = self.message_outputer.output(
-                    content=content, content_type=content_type
-                )
-                yield output
+            output = self.message_outputer.output(
+                content=content, content_type=content_type
+            )
+            yield output
+
+        if not is_finished:
+            yield self.message_outputer.output(content="", content_type="Finished")

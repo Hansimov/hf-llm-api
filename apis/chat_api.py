@@ -64,19 +64,24 @@ class ChatAPIApp:
         streamer = MessageStreamer(model=item.model)
         composer = MessageComposer(model=item.model)
         composer.merge(messages=item.messages)
-        event_source_response = EventSourceResponse(
-            streamer.chat(
-                prompt=composer.merged_str,
-                temperature=item.temperature,
-                max_new_tokens=item.max_tokens,
-                stream=item.stream,
-                yield_output=True,
-            ),
-            media_type="text/event-stream",
-            ping=2000,
-            ping_message_factory=lambda: ServerSentEvent(**{"comment": ""}),
+        # streamer.chat = stream_chat_mock
+
+        stream_response = streamer.chat_response(
+            prompt=composer.merged_str,
+            temperature=item.temperature,
+            max_new_tokens=item.max_tokens,
         )
-        return event_source_response
+        if item.stream:
+            event_source_response = EventSourceResponse(
+                streamer.chat_return_generator(stream_response),
+                media_type="text/event-stream",
+                ping=2000,
+                ping_message_factory=lambda: ServerSentEvent(**{"comment": ""}),
+            )
+            return event_source_response
+        else:
+            data_response = streamer.chat_return_dict(stream_response)
+            return data_response
 
     def setup_routes(self):
         for prefix in ["", "/v1"]:
