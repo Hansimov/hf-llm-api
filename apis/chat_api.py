@@ -2,7 +2,8 @@ import argparse
 import uvicorn
 import sys
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 from utils.logger import logger
@@ -38,6 +39,16 @@ class ChatAPIApp:
         ]
         return self.available_models
 
+    def extract_api_key(
+        credentials: HTTPAuthorizationCredentials = Depends(
+            HTTPBearer(auto_error=False)
+        ),
+    ):
+        if credentials:
+            return credentials.credentials
+        else:
+            return None
+
     class ChatCompletionsPostItem(BaseModel):
         model: str = Field(
             default="mixtral-8x7b",
@@ -60,7 +71,9 @@ class ChatAPIApp:
             description="(bool) Stream",
         )
 
-    def chat_completions(self, item: ChatCompletionsPostItem):
+    def chat_completions(
+        self, item: ChatCompletionsPostItem, api_key: str = Depends(extract_api_key)
+    ):
         streamer = MessageStreamer(model=item.model)
         composer = MessageComposer(model=item.model)
         composer.merge(messages=item.messages)
@@ -70,6 +83,7 @@ class ChatAPIApp:
             prompt=composer.merged_str,
             temperature=item.temperature,
             max_new_tokens=item.max_tokens,
+            api_key=api_key,
         )
         if item.stream:
             event_source_response = EventSourceResponse(

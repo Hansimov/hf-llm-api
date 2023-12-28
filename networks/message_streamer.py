@@ -36,6 +36,7 @@ class MessageStreamer:
         prompt: str = None,
         temperature: float = 0.01,
         max_new_tokens: int = 8192,
+        api_key: str = None,
     ):
         # https://huggingface.co/docs/api-inference/detailed_parameters?code=curl
         # curl --proxy http://<server>:<port> https://api-inference.huggingface.co/models/<org>/<model_name> -X POST -d '{"inputs":"who are you?","parameters":{"max_new_token":64}}' -H 'Content-Type: application/json' -H 'Authorization: Bearer <HF_TOKEN>'
@@ -45,6 +46,13 @@ class MessageStreamer:
         self.request_headers = {
             "Content-Type": "application/json",
         }
+
+        if api_key:
+            logger.note(
+                f"Using API Key: {api_key[:3]}{(len(api_key)-7)*'*'}{api_key[-4:]}"
+            )
+            self.request_headers["Authorization"] = f"Bearer {api_key}"
+
         # References:
         #   huggingface_hub/inference/_client.py:
         #     class InferenceClient > def text_generation()
