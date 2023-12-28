@@ -1,6 +1,7 @@
 import argparse
-import uvicorn
+import os
 import sys
+import uvicorn
 
 from fastapi import FastAPI, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -47,7 +48,7 @@ class ChatAPIApp:
         if credentials:
             return credentials.credentials
         else:
-            return None
+            return os.getenv("HF_TOKEN") or None
 
     class ChatCompletionsPostItem(BaseModel):
         model: str = Field(
