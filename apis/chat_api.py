@@ -24,18 +24,19 @@ class ChatAPIApp:
         self.setup_routes()
 
     def get_available_models(self):
+        # ANCHOR[id=available-models]: Available models
         self.available_models = [
             {
                 "id": "mixtral-8x7b",
-                "description": "[Mixtral-8x7B-Instruct-v0.1]: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1",
+                "description": "[mistralai/Mixtral-8x7B-Instruct-v0.1]: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1",
             },
             {
                 "id": "mistral-7b",
-                "description": "[Mistral-7B-Instruct-v0.2]: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2",
+                "description": "[mistralai/Mistral-7B-Instruct-v0.2]: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2",
             },
             {
                 "id": "openchat-3.5",
-                "description": "[openchat_3.5]: https://huggingface.co/openchat/openchat_3.5",
+                "description": "[openchat/openchat-3.5-1210]: https://huggingface.co/openchat/openchat-3.5-1210",
             },
         ]
         return self.available_models
@@ -64,7 +65,7 @@ class ChatAPIApp:
             description="(float) Temperature",
         )
         max_tokens: int = Field(
-            default=8192,
+            default=4096,
             description="(int) Max tokens",
         )
         stream: bool = Field(
