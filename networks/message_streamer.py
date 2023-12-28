@@ -10,10 +10,15 @@ class MessageStreamer:
     MODEL_MAP = {
         "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",  # 72.62, fast [Recommended]
         "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.2",  # 65.71, fast
-        "openchat-3.5": "openchat/openchat_3.5",  # 61.24, fast
+        "openchat-3.5": "openchat/openchat-3.5-1210",  # ??, fast
         # "zephyr-7b-alpha": "HuggingFaceH4/zephyr-7b-alpha",  # 59.5, fast
         # "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",  # 61.95, slow
         "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+    }
+    STOP_SEQUENCES_MAP = {
+        "mixtral-8x7b": "</s>",
+        "mistral-7b": "</s>",
+        "openchat-3.5": "<|end_of_turn|>",
     }
 
     def __init__(self, model: str):
@@ -68,6 +73,13 @@ class MessageStreamer:
             },
             "stream": True,
         }
+
+        if self.model in self.STOP_SEQUENCES_MAP.keys():
+            self.stop_sequences = self.STOP_SEQUENCES_MAP[self.model]
+        #     self.request_body["parameters"]["stop_sequences"] = [
+        #         self.STOP_SEQUENCES[self.model]
+        #     ]
+
         logger.back(self.request_url)
         enver.set_envs(proxies=True)
         stream_response = requests.post(
@@ -100,18 +112,23 @@ class MessageStreamer:
         ]
         logger.back(final_output)
 
+        final_content = ""
         for line in stream_response.iter_lines():
             if not line:
                 continue
             content = self.parse_line(line)
 
-            if content.strip() == "</s>":
+            if content.strip() == self.stop_sequences:
                 logger.success("\n[Finished]")
                 break
             else:
                 logger.back(content, end="")
-                final_output["choices"][0]["message"]["content"] += content
+                final_content += content
 
+        if self.model in self.STOP_SEQUENCES_MAP.keys():
+            final_content = final_content.replace(self.stop_sequences, "")
+
+        final_output["choices"][0]["message"]["content"] = final_content
         return final_output
 
     def chat_return_generator(self, stream_response):
@@ -122,7 +139,7 @@ class MessageStreamer:
 
             content = self.parse_line(line)
 
-            if content.strip() == "</s>":
+            if content.strip() == self.stop_sequences:
                 content_type = "Finished"
                 logger.success("\n[Finished]")
                 is_finished = True
