@@ -46,10 +46,20 @@ class ChatAPIApp:
             HTTPBearer(auto_error=False)
         ),
     ):
+        api_key = None
         if credentials:
-            return credentials.credentials
+            api_key = credentials.credentials
         else:
-            return os.getenv("HF_TOKEN") or None
+            api_key = os.getenv("HF_TOKEN")
+
+        if api_key:
+            if api_key.startswith("hf_"):
+                return api_key
+            else:
+                logger.warn(f"Invalid HF Token")
+        else:
+            logger.warn("Not provide HF Token!")
+        return None
 
     class ChatCompletionsPostItem(BaseModel):
         model: str = Field(
