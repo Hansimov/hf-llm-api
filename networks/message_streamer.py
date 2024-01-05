@@ -130,13 +130,17 @@ class MessageStreamer:
         if self.model in self.STOP_SEQUENCES_MAP.keys():
             final_content = final_content.replace(self.stop_sequences, "")
 
+        final_content = final_content.strip()
         final_output["choices"][0]["message"]["content"] = final_content
         return final_output
 
     def chat_return_generator(self, stream_response):
         is_finished = False
+        line_count = 0
         for line in stream_response.iter_lines():
-            if not line:
+            if line:
+                line_count += 1
+            else:
                 continue
 
             content = self.parse_line(line)
@@ -147,6 +151,8 @@ class MessageStreamer:
                 is_finished = True
             else:
                 content_type = "Completions"
+                if line_count == 1:
+                    content = content.lstrip()
                 logger.back(content, end="")
 
             output = self.message_outputer.output(
