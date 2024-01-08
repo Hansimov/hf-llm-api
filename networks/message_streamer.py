@@ -55,7 +55,7 @@ class MessageStreamer:
     def chat_response(
         self,
         prompt: str = None,
-        temperature: float = 0.01,
+        temperature: float = 0,
         max_new_tokens: int = None,
         api_key: str = None,
     ):
@@ -73,6 +73,11 @@ class MessageStreamer:
                 f"Using API Key: {api_key[:3]}{(len(api_key)-7)*'*'}{api_key[-4:]}"
             )
             self.request_headers["Authorization"] = f"Bearer {api_key}"
+
+        if temperature is None or temperature < 0:
+            temperature = 0.0
+        # temperature must be positive for HF LLM models
+        temperature = min(temperature, 0.01)
 
         token_limit = (
             self.TOKEN_LIMIT_MAP[self.model]
@@ -96,7 +101,7 @@ class MessageStreamer:
         self.request_body = {
             "inputs": prompt,
             "parameters": {
-                "temperature": max(temperature, 0.01),  # must be positive
+                "temperature": temperature,
                 "max_new_tokens": max_new_tokens,
                 "return_full_text": False,
             },
