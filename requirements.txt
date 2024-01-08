@@ -6,5 +6,6 @@ pydantic
 requests
 sse_starlette
 termcolor
+tiktoken
 uvicorn
 websockets

@@ -56,7 +56,7 @@ class ChatAPIApp:
             if api_key.startswith("hf_"):
                 return api_key
             else:
-                logger.warn(f"Invalid HF Token")
+                logger.warn(f"Invalid HF Token!")
         else:
             logger.warn("Not provide HF Token!")
         return None
@@ -71,11 +71,11 @@ class ChatAPIApp:
             description="(list) Messages",
         )
         temperature: float = Field(
-            default=0.01,
+            default=0,
             description="(float) Temperature",
         )
         max_tokens: int = Field(
-            default=4096,
+            default=-1,
             description="(int) Max tokens",
         )
         stream: bool = Field(

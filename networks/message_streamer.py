@@ -1,6 +1,7 @@
 import json
 import re
 import requests
+from tiktoken import get_encoding as tiktoken_get_encoding
 from messagers.message_outputer import OpenaiStreamOutputer
 from utils.logger import logger
 from utils.enver import enver
@@ -22,6 +23,12 @@ class MessageStreamer:
         "mistral-7b": "</s>",
         "openchat-3.5": "<|end_of_turn|>",
     }
+    TOKEN_LIMIT_MAP = {
+        "mixtral-8x7b": 32768,
+        "mistral-7b": 32768,
+        "openchat-3.5": 8192,
+    }
+    TOKEN_RESERVED = 32
 
     def __init__(self, model: str):
         if model in self.MODEL_MAP.keys():
@@ -30,6 +37,7 @@ class MessageStreamer:
             self.model = "default"
         self.model_fullname = self.MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer()
+        self.tokenizer = tiktoken_get_encoding("cl100k_base")
 
     def parse_line(self, line):
         line = line.decode("utf-8")
@@ -38,11 +46,17 @@ class MessageStreamer:
         content = data["token"]["text"]
         return content
 
+    def count_tokens(self, text):
+        tokens = self.tokenizer.encode(text)
+        token_count = len(tokens)
+        logger.note(f"Prompt Token Count: {token_count}")
+        return token_count
+
     def chat_response(
         self,
         prompt: str = None,
         temperature: float = 0.01,
-        max_new_tokens: int = 8192,
+        max_new_tokens: int = None,
         api_key: str = None,
     ):
         # https://huggingface.co/docs/api-inference/detailed_parameters?code=curl
@@ -59,6 +73,19 @@ class MessageStreamer:
                 f"Using API Key: {api_key[:3]}{(len(api_key)-7)*'*'}{api_key[-4:]}"
             )
             self.request_headers["Authorization"] = f"Bearer {api_key}"
+
+        token_limit = (
+            self.TOKEN_LIMIT_MAP[self.model]
+            - self.TOKEN_RESERVED
+            - self.count_tokens(prompt)
+        )
+        if token_limit <= 0:
+            raise ValueError("Prompt exceeded token limit!")
+
+        if max_new_tokens is None or max_new_tokens <= 0:
+            max_new_tokens = token_limit
+        else:
+            max_new_tokens = min(max_new_tokens, token_limit)
 
         # References:
         #   huggingface_hub/inference/_client.py:
