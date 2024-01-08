@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
+from typing import Union
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 from utils.logger import logger
 from networks.message_streamer import MessageStreamer
@@ -70,11 +71,11 @@ class ChatAPIApp:
             default=[{"role": "user", "content": "Hello, who are you?"}],
             description="(list) Messages",
         )
-        temperature: float = Field(
+        temperature: Union[float, None] = Field(
             default=0,
             description="(float) Temperature",
         )
-        max_tokens: int = Field(
+        max_tokens: Union[int, None] = Field(
             default=-1,
             description="(int) Max tokens",
         )
