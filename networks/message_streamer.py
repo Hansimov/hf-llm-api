@@ -43,7 +43,10 @@ class MessageStreamer:
         line = line.decode("utf-8")
         line = re.sub(r"data:\s*", "", line)
         data = json.loads(line)
-        content = data["token"]["text"]
+        try:
+            content = data["token"]["text"]
+        except:
+            logger.err(data)
         return content
 
     def count_tokens(self, text):
@@ -76,8 +79,9 @@ class MessageStreamer:
 
         if temperature is None or temperature < 0:
             temperature = 0.0
-        # temperature must be positive for HF LLM models
-        temperature = min(temperature, 0.01)
+        # temperature must be positive and <= 1 for HF LLM models
+        temperature = max(temperature, 0.01)
+        temperature = min(temperature, 1)
 
         token_limit = (
             self.TOKEN_LIMIT_MAP[self.model]
