@@ -28,7 +28,7 @@ class MessageStreamer:
         "mistral-7b": 32768,
         "openchat-3.5": 8192,
     }
-    TOKEN_RESERVED = 32
+    TOKEN_RESERVED = 100
 
     def __init__(self, model: str):
         if model in self.MODEL_MAP.keys():
@@ -83,10 +83,10 @@ class MessageStreamer:
         temperature = max(temperature, 0.01)
         temperature = min(temperature, 1)
 
-        token_limit = (
+        token_limit = int(
             self.TOKEN_LIMIT_MAP[self.model]
             - self.TOKEN_RESERVED
-            - self.count_tokens(prompt)
+            - self.count_tokens(prompt) * 1.35
         )
         if token_limit <= 0:
             raise ValueError("Prompt exceeded token limit!")
