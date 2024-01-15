@@ -111,7 +111,7 @@ class ChatAPIApp:
             return data_response
 
     def setup_routes(self):
-        for prefix in ["", "/v1"]:
+        for prefix in ["", "/v1", "/api/v1"]:
             self.app.get(
                 prefix + "/models",
                 summary="Get available models",
