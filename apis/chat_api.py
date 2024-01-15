@@ -35,10 +35,10 @@ class ChatAPIApp:
                 "id": "mistral-7b",
                 "description": "[mistralai/Mistral-7B-Instruct-v0.2]: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2",
             },
-            {
-                "id": "openchat-3.5",
-                "description": "[openchat/openchat-3.5-1210]: https://huggingface.co/openchat/openchat-3.5-1210",
-            },
+            # {
+            #     "id": "openchat-3.5",
+            #     "description": "[openchat/openchat-3.5-1210]: https://huggingface.co/openchat/openchat-3.5-1210",
+            # },
         ]
         return self.available_models
 

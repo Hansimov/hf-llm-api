@@ -11,7 +11,7 @@ class MessageStreamer:
     MODEL_MAP = {
         "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",  # 72.62, fast [Recommended]
         "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.2",  # 65.71, fast
-        "openchat-3.5": "openchat/openchat-3.5-1210",  # 68.89, fast
+        # "openchat-3.5": "openchat/openchat-3.5-1210",  # 68.89, fast
         # "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",  # ❌ Too Slow
         # "llama-70b": "meta-llama/Llama-2-70b-chat-hf",  # ❌ Require Pro User
         # "codellama-34b": "codellama/CodeLlama-34b-Instruct-hf",  # ❌ Low Score
