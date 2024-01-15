@@ -12,23 +12,14 @@ Huggingface LLM Inference API in OpenAI message format.
 
 ## Features
 
-✅ Implemented:
-
-- Available Models:
-  - `mixtral-8x7b`, `mistral-7b`, `openchat-3.5`
+- Available Models (2024/01/15): (https://github.com/Hansimov/hf-llm-api/issues/5)
+  - `mixtral-8x7b`, `mistral-7b`
 - Adaptive prompt templates for different models
 - Support OpenAI API format
-  - Can use api endpoint via official `openai-python` package
+  - Enable api endpoint via official `openai-python` package
 - Support both stream and no-stream response
 - Support API Key via both HTTP auth header and env varible (https://github.com/Hansimov/hf-llm-api/issues/4)
 - Docker deployment
-
-🔨 In progress:
-- [ ] Support more models (https://github.com/Hansimov/hf-llm-api/issues/5)
-  - [ ] meta-llama/Llama-2-70b-chat-hf
-  - [ ] codellama/CodeLlama-34b-Instruct-hf
-  - [ ] tiiuae/falcon-180B-chat
-
 
 ## Run API service
 
