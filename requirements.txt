@@ -1,6 +1,7 @@
 aiohttp
 fastapi
 httpx
+markdown2[all]
 openai
 pydantic
 requests
