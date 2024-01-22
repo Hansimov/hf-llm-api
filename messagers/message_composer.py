@@ -63,12 +63,12 @@ class MessageComposer:
         #   Hello, who are you?<|im_end|>
         #   <|im_start|>assistant
 
-        # self.messages = self.concat_messages_by_role(messages)
         self.messages = messages
         self.merged_str = ""
 
         # https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1#instruction-format
         if self.model in ["mixtral-8x7b", "mistral-7b"]:
+            self.messages = self.concat_messages_by_role(messages)
             self.cached_str = ""
             for message in self.messages:
                 role = message["role"]
@@ -96,6 +96,7 @@ class MessageComposer:
             self.merged_str = "\n".join(self.merged_str_list)
         # https://huggingface.co/openchat/openchat-3.5-0106
         elif self.model in ["openchat-3.5"]:
+            self.messages = self.concat_messages_by_role(messages)
             self.merged_str_list = []
             self.end_of_turn = "<|end_of_turn|>"
             for message in self.messages:
@@ -217,8 +218,8 @@ class MessageComposer:
 
 
 if __name__ == "__main__":
-    # model = "mixtral-8x7b"
-    model = "nous-mixtral-8x7b"
+    model = "mixtral-8x7b"
+    # model = "nous-mixtral-8x7b"
     composer = MessageComposer(model)
     messages = [
         {
