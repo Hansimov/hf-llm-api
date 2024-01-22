@@ -44,6 +44,13 @@ class ChatAPIApp:
                     "created": 1700000000,
                     "owned_by": "mistralai",
                 },
+                {
+                    "id": "nous-mixtral-8x7b",
+                    "description": "[NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO]: https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
+                    "object": "model",
+                    "created": 1700000000,
+                    "owned_by": "NousResearch",
+                },
             ],
         }
         return self.available_models

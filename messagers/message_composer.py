@@ -1,5 +1,6 @@
 import re
 from pprint import pprint
+from utils.logger import logger
 
 
 class MessageComposer:
@@ -8,6 +9,7 @@ class MessageComposer:
         "mixtral-8x7b",
         "mistral-7b",
         "openchat-3.5",
+        "nous-mixtral-8x7b",
     ]
 
     def __init__(self, model: str = None):
@@ -15,8 +17,10 @@ class MessageComposer:
             self.model = model
         else:
             self.model = "mixtral-8x7b"
+        self.system_roles = ["system"]
         self.inst_roles = ["user", "system", "inst"]
         self.answer_roles = ["assistant", "bot", "answer"]
+        self.default_role = "user"
 
     def concat_messages_by_role(self, messages):
         def is_same_role(role1, role2):
@@ -48,12 +52,22 @@ class MessageComposer:
     def merge(self, messages) -> str:
         # Mistral and Mixtral:
         #   <s> [INST] Instruction [/INST] Model answer </s> [INST] Follow-up instruction [/INST]
+
         # OpenChat:
         #   GPT4 Correct User: Hello<|end_of_turn|>GPT4 Correct Assistant: Hi<|end_of_turn|>GPT4 Correct User: How are you today?<|end_of_turn|>GPT4 Correct Assistant:
 
-        self.messages = self.concat_messages_by_role(messages)
+        # Nous Mixtral:
+        #   <|im_start|>system
+        #   You are "Hermes 2".<|im_end|>
+        #   <|im_start|>user
+        #   Hello, who are you?<|im_end|>
+        #   <|im_start|>assistant
+
+        # self.messages = self.concat_messages_by_role(messages)
+        self.messages = messages
         self.merged_str = ""
 
+        # https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1#instruction-format
         if self.model in ["mixtral-8x7b", "mistral-7b"]:
             self.cached_str = ""
             for message in self.messages:
@@ -68,6 +82,19 @@ class MessageComposer:
                     self.cached_str = f"[INST] {content} [/INST]"
             if self.cached_str:
                 self.merged_str += f"{self.cached_str}"
+        # https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO#prompt-format
+        elif self.model in ["nous-mixtral-8x7b"]:
+            self.merged_str_list = []
+            for message in self.messages:
+                role = message["role"]
+                content = message["content"]
+                if role not in ["system", "user", "assistant"]:
+                    role = self.default_role
+                message_line = f"<|im_start|>{role}\n{content}<|im_end|>"
+                self.merged_str_list.append(message_line)
+            self.merged_str_list.append("<|im_start|>assistant")
+            self.merged_str = "\n".join(self.merged_str_list)
+        # https://huggingface.co/openchat/openchat-3.5-0106
         elif self.model in ["openchat-3.5"]:
             self.merged_str_list = []
             self.end_of_turn = "<|end_of_turn|>"
@@ -150,10 +177,21 @@ class MessageComposer:
             self.append_last_instruction_to_messages(
                 inst_matches_list, pair_matches_list
             )
-
+        elif self.model in ["nous-mixtral-8x7b"]:
+            # https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO#prompt-format
+            # message_pattern = r"<\|im_start\|>(?P<role>system|user|assistant)[\s\n]*(?P<content>[\s\S]*?)<\|im_end\|>"
+            message_pattern = r"<\|im_start\|>(?P<role>system|user|assistant)[\s\n]*(?P<content>[\s\S]*?)<\|im_end\|>"
+            message_matches = re.finditer(
+                message_pattern, self.merged_str, flags=re.MULTILINE | re.IGNORECASE
+            )
+            message_matches_list = list(message_matches)
+            logger.note(f"message_matches_list: {message_matches_list}")
+            for match in message_matches_list:
+                role = match.group("role")
+                content = match.group("content")
+                self.messages.append({"role": role, "content": content.strip()})
         elif self.model in ["openchat-3.5"]:
             pair_pattern = r"GPT4 Correct User:(?P<inst>[\s\S]*?)<\|end_of_turn\|>\s*GPT4 Correct Assistant:(?P<answer>[\s\S]*?)<\|end_of_turn\|>"
-            # ignore case
             pair_matches = re.finditer(
                 pair_pattern, self.merged_str, flags=re.MULTILINE | re.IGNORECASE
             )
@@ -179,11 +217,13 @@ class MessageComposer:
 
 
 if __name__ == "__main__":
-    composer = MessageComposer(model="openchat-3.5")
+    # model = "mixtral-8x7b"
+    model = "nous-mixtral-8x7b"
+    composer = MessageComposer(model)
     messages = [
         {
             "role": "system",
-            "content": "You are a LLM developed by OpenAI. Your name is GPT-4.",
+            "content": "You are a LLM developed by OpenAI.\nYour name is GPT-4.",
         },
         {"role": "user", "content": "Hello, who are you?"},
         {"role": "assistant", "content": "I am a bot."},
@@ -196,8 +236,11 @@ if __name__ == "__main__":
         #     "content": "How many questions have I asked? Please list them.",
         # },
     ]
-    print("model:", composer.model)
+    logger.note(f"model: {composer.model}")
     merged_str = composer.merge(messages)
-    print(merged_str)
+    logger.note("merged_str:")
+    logger.mesg(merged_str)
+    logger.note("splitted messages:")
     pprint(composer.split(merged_str))
-    # print(composer.merge(composer.split(merged_str)))
+    # logger.note("merged merged_str:")
+    # logger.mesg(composer.merge(composer.split(merged_str)))

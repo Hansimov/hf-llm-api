@@ -11,6 +11,7 @@ class MessageStreamer:
     MODEL_MAP = {
         "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",  # 72.62, fast [Recommended]
         "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.2",  # 65.71, fast
+        "nous-mixtral-8x7b": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
         # "openchat-3.5": "openchat/openchat-3.5-1210",  # 68.89, fast
         # "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",  # ❌ Too Slow
         # "llama-70b": "meta-llama/Llama-2-70b-chat-hf",  # ❌ Require Pro User
@@ -21,11 +22,13 @@ class MessageStreamer:
     STOP_SEQUENCES_MAP = {
         "mixtral-8x7b": "</s>",
         "mistral-7b": "</s>",
+        "nous-mixtral-8x7b": "<|im_end|>",
         "openchat-3.5": "<|end_of_turn|>",
     }
     TOKEN_LIMIT_MAP = {
         "mixtral-8x7b": 32768,
         "mistral-7b": 32768,
+        "nous-mixtral-8x7b": 32768,
         "openchat-3.5": 8192,
     }
     TOKEN_RESERVED = 100
