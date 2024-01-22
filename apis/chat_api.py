@@ -125,14 +125,17 @@ class ChatAPIApp:
 
     def setup_routes(self):
         for prefix in ["", "/v1", "/api", "/api/v1"]:
+            include_in_schema = True if prefix == "" else False
             self.app.get(
                 prefix + "/models",
                 summary="Get available models",
+                include_in_schema=include_in_schema,
             )(self.get_available_models)
 
             self.app.post(
                 prefix + "/chat/completions",
                 summary="Chat completions in conversation session",
+                include_in_schema=include_in_schema,
             )(self.chat_completions)
 
 
