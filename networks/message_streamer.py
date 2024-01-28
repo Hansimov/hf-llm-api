@@ -84,9 +84,11 @@ class MessageStreamer:
 
         if temperature is None or temperature < 0:
             temperature = 0.0
-        # temperature must be positive and <= 1 for HF LLM models
+        # temperature must  0 < and < 1 for HF LLM models
         temperature = max(temperature, 0.01)
-        temperature = min(temperature, 1)
+        temperature = min(temperature, 0.99)
+        top_p = max(top_p, 0.01)
+        top_p = min(top_p, 0.99)
 
         token_limit = int(
             self.TOKEN_LIMIT_MAP[self.model]
