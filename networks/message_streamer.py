@@ -61,9 +61,10 @@ class MessageStreamer:
     def chat_response(
         self,
         prompt: str = None,
-        temperature: float = 0,
+        temperature: float = 0.5,
         max_new_tokens: int = None,
         api_key: str = None,
+        use_cache: bool = False,
     ):
         # https://huggingface.co/docs/api-inference/detailed_parameters?code=curl
         # curl --proxy http://<server>:<port> https://api-inference.huggingface.co/models/<org>/<model_name> -X POST -d '{"inputs":"who are you?","parameters":{"max_new_token":64}}' -H 'Content-Type: application/json' -H 'Authorization: Bearer <HF_TOKEN>'
@@ -105,12 +106,16 @@ class MessageStreamer:
         #   huggingface_hub/inference/_text_generation.py:
         #     class TextGenerationRequest > param `stream`
         # https://huggingface.co/docs/text-generation-inference/conceptual/streaming#streaming-with-curl
+        # https://huggingface.co/docs/api-inference/detailed_parameters#text-generation-task
         self.request_body = {
             "inputs": prompt,
             "parameters": {
                 "temperature": temperature,
                 "max_new_tokens": max_new_tokens,
                 "return_full_text": False,
+            },
+            "options": {
+                "use_cache": use_cache,
             },
             "stream": True,
         }

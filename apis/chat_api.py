@@ -88,12 +88,16 @@ class ChatAPIApp:
             description="(list) Messages",
         )
         temperature: Union[float, None] = Field(
-            default=0,
+            default=0.5,
             description="(float) Temperature",
         )
         max_tokens: Union[int, None] = Field(
             default=-1,
             description="(int) Max tokens",
+        )
+        use_cache: bool = Field(
+            default=False,
+            description="(bool) Use cache",
         )
         stream: bool = Field(
             default=True,
@@ -113,6 +117,7 @@ class ChatAPIApp:
             temperature=item.temperature,
             max_new_tokens=item.max_tokens,
             api_key=api_key,
+            use_cache=item.use_cache,
         )
         if item.stream:
             event_source_response = EventSourceResponse(
