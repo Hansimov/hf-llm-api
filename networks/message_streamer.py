@@ -62,6 +62,7 @@ class MessageStreamer:
         self,
         prompt: str = None,
         temperature: float = 0.5,
+        top_p: float = 0.95,
         max_new_tokens: int = None,
         api_key: str = None,
         use_cache: bool = False,
@@ -111,6 +112,7 @@ class MessageStreamer:
             "inputs": prompt,
             "parameters": {
                 "temperature": temperature,
+                "top_p": top_p,
                 "max_new_tokens": max_new_tokens,
                 "return_full_text": False,
             },

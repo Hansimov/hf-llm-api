@@ -91,6 +91,10 @@ class ChatAPIApp:
             default=0.5,
             description="(float) Temperature",
         )
+        top_p: Union[float, None] = Field(
+            default=0.95,
+            description="(float) top p",
+        )
         max_tokens: Union[int, None] = Field(
             default=-1,
             description="(int) Max tokens",
@@ -115,6 +119,7 @@ class ChatAPIApp:
         stream_response = streamer.chat_response(
             prompt=composer.merged_str,
             temperature=item.temperature,
+            top_p=item.top_p,
             max_new_tokens=item.max_tokens,
             api_key=api_key,
             use_cache=item.use_cache,
