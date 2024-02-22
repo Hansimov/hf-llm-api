@@ -10,6 +10,7 @@ class MessageComposer:
         "mistral-7b",
         "openchat-3.5",
         "nous-mixtral-8x7b",
+        "gemma-7b",
     ]
 
     def __init__(self, model: str = None):
@@ -19,7 +20,7 @@ class MessageComposer:
             self.model = "mixtral-8x7b"
         self.system_roles = ["system"]
         self.inst_roles = ["user", "system", "inst"]
-        self.answer_roles = ["assistant", "bot", "answer"]
+        self.answer_roles = ["assistant", "bot", "answer", "model"]
         self.default_role = "user"
 
     def concat_messages_by_role(self, messages):
@@ -62,6 +63,11 @@ class MessageComposer:
         #   <|im_start|>user
         #   Hello, who are you?<|im_end|>
         #   <|im_start|>assistant
+
+        # Google Gemma-it
+        # <start_of_turn>user
+        # How does the brain work?<end_of_turn>
+        # <start_of_turn>model
 
         self.messages = messages
         self.merged_str = ""
@@ -115,6 +121,29 @@ class MessageComposer:
                         f"GPT4 Correct User: {content}{self.end_of_turn}"
                     )
             self.merged_str_list.append(f"GPT4 Correct Assistant:\n")
+            self.merged_str = "\n".join(self.merged_str_list)
+        # https://huggingface.co/google/gemma-7b-it#chat-template
+        elif self.model in ["gemma-7b"]:
+            self.messages = self.concat_messages_by_role(messages)
+            self.merged_str_list = []
+            self.end_of_turn = "<end_of_turn>"
+            self.start_of_turn = "<start_of_turn>"
+            for message in self.messages:
+                role = message["role"]
+                content = message["content"]
+                if role in self.inst_roles:
+                    self.merged_str_list.append(
+                        f"{self.start_of_turn}user\n{content}{self.end_of_turn}"
+                    )
+                elif role in self.answer_roles:
+                    self.merged_str_list.append(
+                        f"{self.start_of_turn}model\n{content}{self.end_of_turn}"
+                    )
+                else:
+                    self.merged_str_list.append(
+                        f"{self.start_of_turn}user\n{content}{self.end_of_turn}"
+                    )
+            self.merged_str_list.append(f"{self.start_of_turn}model\n")
             self.merged_str = "\n".join(self.merged_str_list)
         else:
             self.merged_str = "\n".join(
@@ -206,6 +235,22 @@ class MessageComposer:
             self.append_last_instruction_to_messages(
                 inst_matches_list, pair_matches_list
             )
+        # https://huggingface.co/google/gemma-7b-it#chat-template
+        elif self.model in ["gemma-7b"]:
+            pair_pattern = r"<start_of_turn>user[\s\n]*(?P<inst>[\s\S]*?)<end_of_turn>[\s\n]*<start_of_turn>model(?P<answer>[\s\S]*?)<end_of_turn>"
+            pair_matches = re.finditer(
+                pair_pattern, self.merged_str, flags=re.MULTILINE | re.IGNORECASE
+            )
+            pair_matches_list = list(pair_matches)
+            self.messages = self.convert_pair_matches_to_messages(pair_matches_list)
+            inst_pattern = r"<start_of_turn>user\n(?P<inst>[\s\S]*?)<end_of_turn>"
+            inst_matches = re.finditer(
+                inst_pattern, self.merged_str, flags=re.MULTILINE | re.IGNORECASE
+            )
+            inst_matches_list = list(inst_matches)
+            self.append_last_instruction_to_messages(
+                inst_matches_list, pair_matches_list
+            )
         else:
             self.messages = [
                 {
@@ -218,8 +263,9 @@ class MessageComposer:
 
 
 if __name__ == "__main__":
-    model = "mixtral-8x7b"
+    # model = "mixtral-8x7b"
     # model = "nous-mixtral-8x7b"
+    model = "gemma-7b"
     composer = MessageComposer(model)
     messages = [
         {

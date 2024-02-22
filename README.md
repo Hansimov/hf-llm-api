@@ -15,7 +15,7 @@ Project link: https://github.com/Hansimov/hf-llm-api
 ## Features
 
 - Available Models (2024/01/22): [#5](https://github.com/Hansimov/hf-llm-api/issues/5)
-  - `mistral-7b`, `mixtral-8x7b`, `nous-mixtral-8x7b`
+  - `mistral-7b`, `mixtral-8x7b`, `nous-mixtral-8x7b`, `gemma-7b`
   - Adaptive prompt templates for different models
 - Support OpenAI API format
   - Enable api endpoint via official `openai-python` package

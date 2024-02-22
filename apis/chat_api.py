@@ -54,6 +54,13 @@ class ChatAPIApp:
                     "created": 1700000000,
                     "owned_by": "NousResearch",
                 },
+                {
+                    "id": "gemma-7b",
+                    "description": "[google/gemma-7b-it]: https://huggingface.co/google/gemma-7b-it",
+                    "object": "model",
+                    "created": 1700000000,
+                    "owned_by": "Google",
+                },
             ],
         }
         return self.available_models
