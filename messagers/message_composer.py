@@ -1,21 +1,15 @@
 import re
 from pprint import pprint
-from utils.logger import logger
+
 from transformers import AutoTokenizer
+
+from constants.models import AVAILABLE_MODELS
+from utils.logger import logger
 
 
 class MessageComposer:
-    # LINK - apis/chat_api.py#available-models
-    AVALAIBLE_MODELS = [
-        "mixtral-8x7b",
-        "mistral-7b",
-        "nous-mixtral-8x7b",
-        "openchat-3.5",
-        "gemma-7b",
-    ]
-
     def __init__(self, model: str = None):
-        if model in self.AVALAIBLE_MODELS:
+        if model in AVAILABLE_MODELS:
             self.model = model
         else:
             self.model = "mixtral-8x7b"

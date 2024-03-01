@@ -5,16 +5,19 @@ import sys
 import uvicorn
 
 from pathlib import Path
+from typing import Union
+
 from fastapi import FastAPI, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
-from typing import Union
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
-from utils.logger import logger
-from networks.message_streamer import MessageStreamer
+
 from messagers.message_composer import MessageComposer
 from mocks.stream_chat_mocker import stream_chat_mock
+from networks.message_streamer import MessageStreamer
+from utils.logger import logger
+from constants.models import AVAILABLE_MODELS_DICTS
 
 
 class ChatAPIApp:
@@ -28,49 +31,7 @@ class ChatAPIApp:
         self.setup_routes()
 
     def get_available_models(self):
-        # https://platform.openai.com/docs/api-reference/models/list
-        # ANCHOR[id=available-models]: Available models
-        self.available_models = {
-            "object": "list",
-            "data": [
-                {
-                    "id": "mixtral-8x7b",
-                    "description": "[mistralai/Mixtral-8x7B-Instruct-v0.1]: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1",
-                    "object": "model",
-                    "created": 1700000000,
-                    "owned_by": "mistralai",
-                },
-                {
-                    "id": "nous-mixtral-8x7b",
-                    "description": "[NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO]: https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
-                    "object": "model",
-                    "created": 1700000000,
-                    "owned_by": "NousResearch",
-                },
-                {
-                    "id": "mistral-7b",
-                    "description": "[mistralai/Mistral-7B-Instruct-v0.2]: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2",
-                    "object": "model",
-                    "created": 1700000000,
-                    "owned_by": "mistralai",
-                },
-                {
-                    "id": "openchat-3.5",
-                    "description": "[openchat/openchat-3.5-0106]: https://huggingface.co/openchat/openchat-3.5-0106",
-                    "object": "model",
-                    "created": 1700000000,
-                    "owned_by": "openchat",
-                },
-                {
-                    "id": "gemma-7b",
-                    "description": "[google/gemma-7b-it]: https://huggingface.co/google/gemma-7b-it",
-                    "object": "model",
-                    "created": 1700000000,
-                    "owned_by": "Google",
-                },
-            ],
-        }
-        return self.available_models
+        return {"object": "list", "data": AVAILABLE_MODELS_DICTS}
 
     def extract_api_key(
         credentials: HTTPAuthorizationCredentials = Depends(

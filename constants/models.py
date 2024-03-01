@@ -25,3 +25,51 @@ TOKEN_LIMIT_MAP = {
 }
 
 TOKEN_RESERVED = 20
+
+
+AVAILABLE_MODELS = [
+    "mixtral-8x7b",
+    "nous-mixtral-8x7b",
+    "mistral-7b",
+    "openchat-3.5",
+    "gemma-7b",
+]
+
+# https://platform.openai.com/docs/api-reference/models/list
+AVAILABLE_MODELS_DICTS = [
+    {
+        "id": "mixtral-8x7b",
+        "description": "[mistralai/Mixtral-8x7B-Instruct-v0.1]: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "mistralai",
+    },
+    {
+        "id": "nous-mixtral-8x7b",
+        "description": "[NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO]: https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "NousResearch",
+    },
+    {
+        "id": "mistral-7b",
+        "description": "[mistralai/Mistral-7B-Instruct-v0.2]: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "mistralai",
+    },
+    {
+        "id": "openchat-3.5",
+        "description": "[openchat/openchat-3.5-0106]: https://huggingface.co/openchat/openchat-3.5-0106",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "openchat",
+    },
+    {
+        "id": "gemma-7b",
+        "description": "[google/gemma-7b-it]: https://huggingface.co/google/gemma-7b-it",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "Google",
+    },
+]
