@@ -1,26 +1,17 @@
 import json
 import re
 import requests
+
 from tiktoken import get_encoding as tiktoken_get_encoding
+from transformers import AutoTokenizer
+
 from messagers.message_outputer import OpenaiStreamOutputer
+from constants.models import MODEL_MAP
 from utils.logger import logger
 from utils.enver import enver
-from transformers import AutoTokenizer
 
 
 class MessageStreamer:
-    MODEL_MAP = {
-        "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",  # 72.62, fast [Recommended]
-        "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.2",  # 65.71, fast
-        "nous-mixtral-8x7b": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
-        "openchat-3.5": "openchat/openchat-3.5-0106",
-        "gemma-7b": "google/gemma-7b-it",
-        # "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",  # ❌ Too Slow
-        # "llama-70b": "meta-llama/Llama-2-70b-chat-hf",  # ❌ Require Pro User
-        # "codellama-34b": "codellama/CodeLlama-34b-Instruct-hf",  # ❌ Low Score
-        # "falcon-180b": "tiiuae/falcon-180B-chat",  # ❌ Require Pro User
-        "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-    }
     STOP_SEQUENCES_MAP = {
         "mixtral-8x7b": "</s>",
         "mistral-7b": "</s>",
@@ -35,17 +26,22 @@ class MessageStreamer:
         "openchat-3.5": 8192,
         "gemma-7b": 8192,
     }
-    TOKEN_RESERVED = 100
+    TOKEN_RESERVED = 20
 
     def __init__(self, model: str):
-        if model in self.MODEL_MAP.keys():
+        if model in MODEL_MAP.keys():
             self.model = model
         else:
             self.model = "default"
-        self.model_fullname = self.MODEL_MAP[self.model]
+        self.model_fullname = MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer()
-        # self.tokenizer = tiktoken_get_encoding("cl100k_base")
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
+
+        if self.model == "gemma-7b":
+            # this is not wrong, as repo `google/gemma-7b-it` is gated and must authenticate to access it
+            # so I use mistral-7b as a fallback
+            self.tokenizer = AutoTokenizer.from_pretrained(MODEL_MAP["mistral-7b"])
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
 
     def parse_line(self, line):
         line = line.decode("utf-8")
@@ -98,7 +94,7 @@ class MessageStreamer:
         token_limit = int(
             self.TOKEN_LIMIT_MAP[self.model]
             - self.TOKEN_RESERVED
-            - self.count_tokens(prompt) * 1.35
+            - self.count_tokens(prompt)
         )
         if token_limit <= 0:
             raise ValueError("Prompt exceeded token limit!")
