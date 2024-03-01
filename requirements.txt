@@ -1,6 +1,7 @@
 aiohttp
 fastapi
 httpx
+jinja2
 markdown2[all]
 openai
 pydantic
