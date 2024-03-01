@@ -5,28 +5,18 @@ import requests
 from tiktoken import get_encoding as tiktoken_get_encoding
 from transformers import AutoTokenizer
 
+from constants.models import (
+    MODEL_MAP,
+    STOP_SEQUENCES_MAP,
+    TOKEN_LIMIT_MAP,
+    TOKEN_RESERVED,
+)
 from messagers.message_outputer import OpenaiStreamOutputer
-from constants.models import MODEL_MAP
 from utils.logger import logger
 from utils.enver import enver
 
 
 class MessageStreamer:
-    STOP_SEQUENCES_MAP = {
-        "mixtral-8x7b": "</s>",
-        "mistral-7b": "</s>",
-        "nous-mixtral-8x7b": "<|im_end|>",
-        "openchat-3.5": "<|end_of_turn|>",
-        "gemma-7b": "<eos>",
-    }
-    TOKEN_LIMIT_MAP = {
-        "mixtral-8x7b": 32768,
-        "mistral-7b": 32768,
-        "nous-mixtral-8x7b": 32768,
-        "openchat-3.5": 8192,
-        "gemma-7b": 8192,
-    }
-    TOKEN_RESERVED = 20
 
     def __init__(self, model: str):
         if model in MODEL_MAP.keys():
@@ -92,9 +82,7 @@ class MessageStreamer:
         top_p = min(top_p, 0.99)
 
         token_limit = int(
-            self.TOKEN_LIMIT_MAP[self.model]
-            - self.TOKEN_RESERVED
-            - self.count_tokens(prompt)
+            TOKEN_LIMIT_MAP[self.model] - TOKEN_RESERVED - self.count_tokens(prompt)
         )
         if token_limit <= 0:
             raise ValueError("Prompt exceeded token limit!")
@@ -125,8 +113,8 @@ class MessageStreamer:
             "stream": True,
         }
 
-        if self.model in self.STOP_SEQUENCES_MAP.keys():
-            self.stop_sequences = self.STOP_SEQUENCES_MAP[self.model]
+        if self.model in STOP_SEQUENCES_MAP.keys():
+            self.stop_sequences = STOP_SEQUENCES_MAP[self.model]
         #     self.request_body["parameters"]["stop_sequences"] = [
         #         self.STOP_SEQUENCES[self.model]
         #     ]
@@ -176,7 +164,7 @@ class MessageStreamer:
                 logger.back(content, end="")
                 final_content += content
 
-        if self.model in self.STOP_SEQUENCES_MAP.keys():
+        if self.model in STOP_SEQUENCES_MAP.keys():
             final_content = final_content.replace(self.stop_sequences, "")
 
         final_content = final_content.strip()
