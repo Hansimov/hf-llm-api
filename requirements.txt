@@ -8,5 +8,6 @@ requests
 sse_starlette
 termcolor
 tiktoken
+transformers
 uvicorn
 websockets

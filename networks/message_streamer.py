@@ -5,6 +5,7 @@ from tiktoken import get_encoding as tiktoken_get_encoding
 from messagers.message_outputer import OpenaiStreamOutputer
 from utils.logger import logger
 from utils.enver import enver
+from transformers import AutoTokenizer
 
 
 class MessageStreamer:
@@ -12,8 +13,8 @@ class MessageStreamer:
         "mixtral-8x7b": "mistralai/Mixtral-8x7B-Instruct-v0.1",  # 72.62, fast [Recommended]
         "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.2",  # 65.71, fast
         "nous-mixtral-8x7b": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
+        "openchat-3.5": "openchat/openchat-3.5-0106",
         "gemma-7b": "google/gemma-7b-it",
-        # "openchat-3.5": "openchat/openchat-3.5-1210",  # 68.89, fast
         # "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",  # ❌ Too Slow
         # "llama-70b": "meta-llama/Llama-2-70b-chat-hf",  # ❌ Require Pro User
         # "codellama-34b": "codellama/CodeLlama-34b-Instruct-hf",  # ❌ Low Score
@@ -43,7 +44,8 @@ class MessageStreamer:
             self.model = "default"
         self.model_fullname = self.MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer()
-        self.tokenizer = tiktoken_get_encoding("cl100k_base")
+        # self.tokenizer = tiktoken_get_encoding("cl100k_base")
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
 
     def parse_line(self, line):
         line = line.decode("utf-8")

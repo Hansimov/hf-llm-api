@@ -1,6 +1,7 @@
 import re
 from pprint import pprint
 from utils.logger import logger
+from transformers import AutoTokenizer
 
 
 class MessageComposer:
@@ -8,8 +9,8 @@ class MessageComposer:
     AVALAIBLE_MODELS = [
         "mixtral-8x7b",
         "mistral-7b",
-        "openchat-3.5",
         "nous-mixtral-8x7b",
+        "openchat-3.5",
         "gemma-7b",
     ]
 
@@ -102,26 +103,30 @@ class MessageComposer:
             self.merged_str = "\n".join(self.merged_str_list)
         # https://huggingface.co/openchat/openchat-3.5-0106
         elif self.model in ["openchat-3.5"]:
-            self.messages = self.concat_messages_by_role(messages)
-            self.merged_str_list = []
-            self.end_of_turn = "<|end_of_turn|>"
-            for message in self.messages:
-                role = message["role"]
-                content = message["content"]
-                if role in self.inst_roles:
-                    self.merged_str_list.append(
-                        f"GPT4 Correct User:\n{content}{self.end_of_turn}"
-                    )
-                elif role in self.answer_roles:
-                    self.merged_str_list.append(
-                        f"GPT4 Correct Assistant:\n{content}{self.end_of_turn}"
-                    )
-                else:
-                    self.merged_str_list.append(
-                        f"GPT4 Correct User: {content}{self.end_of_turn}"
-                    )
-            self.merged_str_list.append(f"GPT4 Correct Assistant:\n")
-            self.merged_str = "\n".join(self.merged_str_list)
+            tokenizer = AutoTokenizer.from_pretrained("openchat/openchat-3.5-0106")
+            self.merged_str = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+            # self.messages = self.concat_messages_by_role(messages)
+            # self.merged_str_list = []
+            # self.end_of_turn = "<|end_of_turn|>"
+            # for message in self.messages:
+            #     role = message["role"]
+            #     content = message["content"]
+            #     if role in self.inst_roles:
+            #         self.merged_str_list.append(
+            #             f"GPT4 Correct User:\n{content}{self.end_of_turn}"
+            #         )
+            #     elif role in self.answer_roles:
+            #         self.merged_str_list.append(
+            #             f"GPT4 Correct Assistant:\n{content}{self.end_of_turn}"
+            #         )
+            #     else:
+            #         self.merged_str_list.append(
+            #             f"GPT4 Correct User: {content}{self.end_of_turn}"
+            #         )
+            # self.merged_str_list.append(f"GPT4 Correct Assistant:\n")
+            # self.merged_str = "\n".join(self.merged_str_list)
         # https://huggingface.co/google/gemma-7b-it#chat-template
         elif self.model in ["gemma-7b"]:
             self.messages = self.concat_messages_by_role(messages)
@@ -265,7 +270,8 @@ class MessageComposer:
 if __name__ == "__main__":
     # model = "mixtral-8x7b"
     # model = "nous-mixtral-8x7b"
-    model = "gemma-7b"
+    # model = "gemma-7b"
+    model = "openchat-3.5"
     composer = MessageComposer(model)
     messages = [
         {
@@ -291,3 +297,5 @@ if __name__ == "__main__":
     pprint(composer.split(merged_str))
     # logger.note("merged merged_str:")
     # logger.mesg(composer.merge(composer.split(merged_str)))
+
+    # python -m messagers.message_composer
