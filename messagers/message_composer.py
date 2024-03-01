@@ -91,6 +91,40 @@ class MessageComposer:
                     self.cached_str = f"[INST] {content} [/INST]"
             if self.cached_str:
                 self.merged_str += f"{self.cached_str}"
+        # https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO#prompt-format
+        elif self.model in ["nous-mixtral-8x7b"]:
+            self.merged_str_list = []
+            for message in self.messages:
+                role = message["role"]
+                content = message["content"]
+                if role not in ["system", "user", "assistant"]:
+                    role = self.default_role
+                message_line = f"<|im_start|>{role}\n{content}<|im_end|>"
+                self.merged_str_list.append(message_line)
+            self.merged_str_list.append("<|im_start|>assistant")
+            self.merged_str = "\n".join(self.merged_str_list)
+        # https://huggingface.co/openchat/openchat-3.5-0106
+        elif self.model in ["openchat-3.5"]:
+            self.messages = self.concat_messages_by_role(messages)
+            self.merged_str_list = []
+            self.end_of_turn = "<|end_of_turn|>"
+            for message in self.messages:
+                role = message["role"]
+                content = message["content"]
+                if role in self.inst_roles:
+                    self.merged_str_list.append(
+                        f"GPT4 Correct User:\n{content}{self.end_of_turn}"
+                    )
+                elif role in self.answer_roles:
+                    self.merged_str_list.append(
+                        f"GPT4 Correct Assistant:\n{content}{self.end_of_turn}"
+                    )
+                else:
+                    self.merged_str_list.append(
+                        f"GPT4 Correct User: {content}{self.end_of_turn}"
+                    )
+            self.merged_str_list.append(f"GPT4 Correct Assistant:\n")
+            self.merged_str = "\n".join(self.merged_str_list)
         # https://huggingface.co/google/gemma-7b-it#chat-template
         elif self.model in ["gemma-7b"]:
             self.messages = self.concat_messages_by_role(messages)
