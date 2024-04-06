@@ -1,4 +1,5 @@
 aiohttp
+curl_cffi
 fastapi
 httpx
 jinja2
@@ -8,6 +9,7 @@ pydantic
 requests
 sse_starlette
 termcolor
+tclogger
 tiktoken
 transformers
 uvicorn
