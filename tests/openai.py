@@ -1,3 +1,4 @@
+import copy
 import uuid
 
 from pathlib import Path
@@ -18,12 +19,14 @@ class OpenaiAPI:
         self.api_me = f"{self.api_base}/me"
         self.api_models = f"{self.api_base}/models"
         self.api_chat_requirements = f"{self.api_base}/sentinel/chat-requirements"
+        self.api_conversation = f"{self.api_base}/conversation"
         self.uuid = str(uuid.uuid4())
         self.requests_headers = {
             # "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Accept-Language": "en-US,en;q=0.9",
             "Cache-Control": "no-cache",
+            "Content-Type": "application/json",
             "Oai-Device-Id": self.uuid,
             "Oai-Language": "en-US",
             "Pragma": "no-cache",
@@ -58,11 +61,10 @@ class OpenaiAPI:
         status_code_str = f"[{status_code}]"
         if status_code == 200:
             logger.success(status_code_str)
+            logger.success(res.json())
         else:
             logger.warn(status_code_str)
-            logger.warn(f"uuid: {self.uuid}")
-
-        logger.line(res.json())
+            logger.warn(res.json())
 
     def get_models(self):
         self.log_request(self.api_models)
@@ -88,9 +90,51 @@ class OpenaiAPI:
 
         self.log_response(res)
 
+    def chat_completions(self, prompt: str):
+        new_headers = {
+            "Accept": "text/event-stream",
+        }
+        requests_headers = copy.deepcopy(self.requests_headers)
+        requests_headers.update(new_headers)
+        post_data = {
+            "action": "next",
+            "messages": [
+                {
+                    "id": self.uuid,
+                    "author": {"role": "user"},
+                    "content": {"content_type": "text", "parts": [prompt]},
+                    "metadata": {},
+                }
+            ],
+            # "parent_message_id": "aaa1de6f-3d50-4d57-8591-ec7042deb594",
+            "model": "text-davinci-002-render-sha",
+            "timezone_offset_min": -480,
+            "suggestions": [],
+            "history_and_training_disabled": False,
+            "conversation_mode": {"kind": "primary_assistant"},
+            "force_paragen": False,
+            "force_paragen_model_slug": "",
+            "force_nulligen": False,
+            "force_rate_limit": False,
+            # "websocket_request_id": "f4bd44ac-64ad-4832-b6ca-3603ac6b38c5",
+        }
+        self.log_request(self.api_conversation, method="POST")
+        res = requests.post(
+            self.api_conversation,
+            headers=requests_headers,
+            json=post_data,
+            proxies=self.requests_proxies,
+            timeout=10,
+            impersonate="chrome120",
+        )
+        self.log_response(res)
+
 
 if __name__ == "__main__":
     api = OpenaiAPI()
-    api.auth()
+    # api.get_models()
+    # api.auth()
+    prompt = "who are you?"
+    api.chat_completions(prompt)
 
     # python -m tests.openai
