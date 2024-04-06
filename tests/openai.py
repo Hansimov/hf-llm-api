@@ -11,24 +11,19 @@ ENVER = OSEnver(secrets_path)
 
 class OpenaiAPI:
     def __init__(self):
-        self.api_me = "https://chat.openai.com/backend-anon/me"
-        self.api_models = "https://chat.openai.com/backend-anon/models"
+        self.init_requests_params()
 
-    def auth(self):
-        http_proxy = ENVER["http_proxy"]
-        if http_proxy:
-            logger.note(f"> Using Proxy: {http_proxy}")
-        requests_proxies = {
-            "http": http_proxy,
-            "https": http_proxy,
-        }
-        uuid_str = str(uuid.uuid4())
-        requests_headers = {
+    def init_requests_params(self):
+        self.api_base = "https://chat.openai.com/backend-anon"
+        self.api_me = f"{self.api_base}/me"
+        self.api_models = f"{self.api_base}/models"
+        self.api_chat_requirements = f"{self.api_base}/sentinel/chat-requirements"
+        self.requests_headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Accept-Language": "en-US,en;q=0.9",
             "Cache-Control": "no-cache",
-            "Oai-Device-Id": uuid_str,
+            "Oai-Device-Id": str(uuid.uuid4()),
             "Oai-Language": "en-US",
             "Pragma": "no-cache",
             "Referer": "https://chat.openai.com/",
@@ -41,12 +36,22 @@ class OpenaiAPI:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
         }
 
+        http_proxy = ENVER["http_proxy"]
+        self.requests_proxies = {
+            "http": http_proxy,
+            "https": http_proxy,
+        }
+
+    def get_models(self):
+        if ENVER["http_proxy"]:
+            logger.note(f"> Using Proxy: {ENVER['http_proxy']}")
+
         logger.note(f"> Get: {self.api_models}")
 
         res = requests.get(
             self.api_models,
-            headers=requests_headers,
-            proxies=requests_proxies,
+            headers=self.requests_headers,
+            proxies=self.requests_proxies,
             timeout=10,
             impersonate="chrome120",
         )
@@ -57,6 +62,6 @@ class OpenaiAPI:
 
 if __name__ == "__main__":
     api = OpenaiAPI()
-    api.auth()
+    api.get_models()
 
     # python -m tests.openai
