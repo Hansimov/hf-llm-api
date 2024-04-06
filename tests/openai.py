@@ -1,4 +1,6 @@
 import copy
+import json
+import re
 import uuid
 
 from pathlib import Path
@@ -46,17 +48,16 @@ class OpenaiAPI:
                 "http": http_proxy,
                 "https": http_proxy,
             }
+            logger.note(f"> Using Proxy:", end=" ")
+            logger.mesg(f"{ENVER['http_proxy']}")
         else:
             self.requests_proxies = None
 
     def log_request(self, url, method="GET"):
-        if ENVER["http_proxy"]:
-            logger.note(f"> Using Proxy:", end=" ")
-            logger.mesg(f"{ENVER['http_proxy']}")
         logger.note(f"> {method}:", end=" ")
         logger.mesg(f"{url}", end=" ")
 
-    def log_response(self, res: requests.Response, stream=False):
+    def log_response(self, res: requests.Response, stream=False, verbose=False):
         status_code = res.status_code
         status_code_str = f"[{status_code}]"
 
@@ -64,12 +65,35 @@ class OpenaiAPI:
             logger_func = logger.success
         else:
             logger_func = logger.warn
+
         logger_func(status_code_str)
 
-        if stream:
-            logger_func(res.text)
-        else:
-            logger_func(res.json())
+        if verbose:
+            if stream:
+                if not hasattr(self, "content_offset"):
+                    self.content_offset = 0
+
+                for line in res.iter_lines():
+                    line = line.decode("utf-8")
+                    line = re.sub(r"^data:\s*", "", line)
+                    if re.match(r"^\[DONE\]", line):
+                        logger.success("\n[Finished]")
+                        break
+                    line = line.strip()
+                    if line:
+                        try:
+                            data = json.loads(line, strict=False)
+                            role = data["message"]["author"]["role"]
+                            if role != "assistant":
+                                continue
+                            content = data["message"]["content"]["parts"][0]
+                            delta_content = content[self.content_offset :]
+                            self.content_offset = len(content)
+                            logger_func(delta_content, end="")
+                        except Exception as e:
+                            logger.warn(e)
+            else:
+                logger_func(res.json())
 
     def get_models(self):
         self.log_request(self.api_models)
@@ -111,7 +135,7 @@ class OpenaiAPI:
                     "metadata": {},
                 }
             ],
-            "parent_message_id": str(uuid.uuid4()),
+            "parent_message_id": "",
             "model": "text-davinci-002-render-sha",
             "timezone_offset_min": -480,
             "suggestions": [],
@@ -124,22 +148,24 @@ class OpenaiAPI:
             "websocket_request_id": str(uuid.uuid4()),
         }
         self.log_request(self.api_conversation, method="POST")
-        res = requests.post(
+        s = requests.Session()
+        res = s.post(
             self.api_conversation,
             headers=requests_headers,
             json=post_data,
             proxies=self.requests_proxies,
             timeout=10,
             impersonate="chrome120",
+            stream=True,
         )
-        self.log_response(res, stream=True)
+        self.log_response(res, stream=True, verbose=True)
 
 
 if __name__ == "__main__":
     api = OpenaiAPI()
     # api.get_models()
     api.auth()
-    prompt = "who are you?"
+    prompt = "你的名字？"
     api.chat_completions(prompt)
 
     # python -m tests.openai
