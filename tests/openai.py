@@ -20,7 +20,7 @@ class OpenaiAPI:
         self.api_chat_requirements = f"{self.api_base}/sentinel/chat-requirements"
         self.uuid = str(uuid.uuid4())
         self.requests_headers = {
-            "Accept": "*/*",
+            # "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Accept-Language": "en-US,en;q=0.9",
             "Cache-Control": "no-cache",
@@ -38,15 +38,20 @@ class OpenaiAPI:
         }
 
         http_proxy = ENVER["http_proxy"]
-        self.requests_proxies = {
-            "http": http_proxy,
-            "https": http_proxy,
-        }
+        if http_proxy:
+            self.requests_proxies = {
+                "http": http_proxy,
+                "https": http_proxy,
+            }
+        else:
+            self.requests_proxies = None
 
     def log_request(self, url, method="GET"):
         if ENVER["http_proxy"]:
-            logger.note(f"> Using Proxy: {ENVER['http_proxy']}")
-        logger.note(f"> {method}: {url}", end=" ")
+            logger.note(f"> Using Proxy:", end=" ")
+            logger.mesg(f"{ENVER['http_proxy']}")
+        logger.note(f"> {method}:", end=" ")
+        logger.mesg(f"{url}", end=" ")
 
     def log_response(self, res: requests.Response):
         status_code = res.status_code
@@ -54,10 +59,10 @@ class OpenaiAPI:
         if status_code == 200:
             logger.success(status_code_str)
         else:
-            logger.warn(f"uuid: {self.uuid}")
             logger.warn(status_code_str)
+            logger.warn(f"uuid: {self.uuid}")
 
-        logger.mesg(res.json())
+        logger.line(res.json())
 
     def get_models(self):
         self.log_request(self.api_models)
