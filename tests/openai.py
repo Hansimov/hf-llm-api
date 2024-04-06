@@ -56,15 +56,20 @@ class OpenaiAPI:
         logger.note(f"> {method}:", end=" ")
         logger.mesg(f"{url}", end=" ")
 
-    def log_response(self, res: requests.Response):
+    def log_response(self, res: requests.Response, stream=False):
         status_code = res.status_code
         status_code_str = f"[{status_code}]"
+
         if status_code == 200:
-            logger.success(status_code_str)
-            logger.success(res.json())
+            logger_func = logger.success
         else:
-            logger.warn(status_code_str)
-            logger.warn(res.json())
+            logger_func = logger.warn
+        logger_func(status_code_str)
+
+        if stream:
+            logger_func(res.text)
+        else:
+            logger_func(res.json())
 
     def get_models(self):
         self.log_request(self.api_models)
@@ -75,11 +80,10 @@ class OpenaiAPI:
             timeout=10,
             impersonate="chrome120",
         )
-
         self.log_response(res)
 
     def auth(self):
-        self.log_request(self.api_models, method="POST")
+        self.log_request(self.api_chat_requirements, method="POST")
         res = requests.post(
             self.api_chat_requirements,
             headers=self.requests_headers,
@@ -87,12 +91,13 @@ class OpenaiAPI:
             timeout=10,
             impersonate="chrome120",
         )
-
+        self.chat_requirements_token = res.json()["token"]
         self.log_response(res)
 
     def chat_completions(self, prompt: str):
         new_headers = {
             "Accept": "text/event-stream",
+            "Openai-Sentinel-Chat-Requirements-Token": self.chat_requirements_token,
         }
         requests_headers = copy.deepcopy(self.requests_headers)
         requests_headers.update(new_headers)
@@ -106,7 +111,7 @@ class OpenaiAPI:
                     "metadata": {},
                 }
             ],
-            # "parent_message_id": "aaa1de6f-3d50-4d57-8591-ec7042deb594",
+            "parent_message_id": str(uuid.uuid4()),
             "model": "text-davinci-002-render-sha",
             "timezone_offset_min": -480,
             "suggestions": [],
@@ -116,7 +121,7 @@ class OpenaiAPI:
             "force_paragen_model_slug": "",
             "force_nulligen": False,
             "force_rate_limit": False,
-            # "websocket_request_id": "f4bd44ac-64ad-4832-b6ca-3603ac6b38c5",
+            "websocket_request_id": str(uuid.uuid4()),
         }
         self.log_request(self.api_conversation, method="POST")
         res = requests.post(
@@ -127,13 +132,13 @@ class OpenaiAPI:
             timeout=10,
             impersonate="chrome120",
         )
-        self.log_response(res)
+        self.log_response(res, stream=True)
 
 
 if __name__ == "__main__":
     api = OpenaiAPI()
     # api.get_models()
-    # api.auth()
+    api.auth()
     prompt = "who are you?"
     api.chat_completions(prompt)
 
