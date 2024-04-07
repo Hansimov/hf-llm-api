@@ -18,4 +18,4 @@ jobs:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push -f https://Hansimov:$HF_TOKEN@huggingface.co/spaces/Hansimov/hf-llm-api main
+        run: git push -f https://Hansimov:$HF_TOKEN@huggingface.co/spaces/Hansimov/hf-llm-api main:main
