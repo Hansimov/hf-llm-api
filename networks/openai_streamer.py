@@ -35,7 +35,9 @@ class OpenaiRequester:
         logger.note(f"> {method}:", end=" ")
         logger.mesg(f"{url}", end=" ")
 
-    def log_response(self, res: requests.Response, stream=False, verbose=False):
+    def log_response(
+        self, res: requests.Response, stream=False, iter_lines=False, verbose=False
+    ):
         status_code = res.status_code
         status_code_str = f"[{status_code}]"
 
@@ -46,35 +48,41 @@ class OpenaiRequester:
 
         logger_func(status_code_str)
 
-        if verbose:
-            if stream:
-                if not hasattr(self, "content_offset"):
-                    self.content_offset = 0
+        logger.enter_quiet(not verbose)
 
-                for line in res.iter_lines():
-                    line = line.decode("utf-8")
-                    line = re.sub(r"^data:\s*", "", line)
-                    if re.match(r"^\[DONE\]", line):
-                        logger.success("\n[Finished]")
-                        break
-                    line = line.strip()
-                    if line:
-                        try:
-                            data = json.loads(line, strict=False)
-                            message_role = data["message"]["author"]["role"]
-                            message_status = data["message"]["status"]
-                            if (
-                                message_role == "assistant"
-                                and message_status == "in_progress"
-                            ):
-                                content = data["message"]["content"]["parts"][0]
-                                delta_content = content[self.content_offset :]
-                                self.content_offset = len(content)
-                                logger_func(delta_content, end="")
-                        except Exception as e:
-                            logger.warn(e)
-            else:
-                logger_func(res.json())
+        if stream:
+            if not iter_lines:
+                return
+
+            if not hasattr(self, "content_offset"):
+                self.content_offset = 0
+
+            for line in res.iter_lines():
+                line = line.decode("utf-8")
+                line = re.sub(r"^data:\s*", "", line)
+                if re.match(r"^\[DONE\]", line):
+                    logger.success("\n[Finished]")
+                    break
+                line = line.strip()
+                if line:
+                    try:
+                        data = json.loads(line, strict=False)
+                        message_role = data["message"]["author"]["role"]
+                        message_status = data["message"]["status"]
+                        if (
+                            message_role == "assistant"
+                            and message_status == "in_progress"
+                        ):
+                            content = data["message"]["content"]["parts"][0]
+                            delta_content = content[self.content_offset :]
+                            self.content_offset = len(content)
+                            logger_func(delta_content, end="")
+                    except Exception as e:
+                        logger.warn(e)
+        else:
+            logger_func(res.json())
+
+        logger.exit_quiet(not verbose)
 
     def get_models(self):
         self.log_request(self.api_models)
@@ -142,8 +150,7 @@ class OpenaiRequester:
             impersonate="chrome120",
             stream=True,
         )
-        if verbose:
-            self.log_response(res, stream=True, verbose=True)
+        self.log_response(res, stream=True, iter_lines=False)
         return res
 
 
@@ -177,7 +184,7 @@ class OpenaiStreamer:
         requester.auth()
         return requester.chat_completions(messages, verbose=False)
 
-    def chat_return_generator(self, stream_response: requests.Response):
+    def chat_return_generator(self, stream_response: requests.Response, verbose=False):
         content_offset = 0
         is_finished = False
 
@@ -206,7 +213,8 @@ class OpenaiStreamer:
                             continue
                         delta_content = content[content_offset:]
                         content_offset = len(content)
-                        logger.success(delta_content, end="")
+                        if verbose:
+                            logger.success(delta_content, end="")
                     else:
                         continue
                 except Exception as e:
@@ -219,3 +227,25 @@ class OpenaiStreamer:
 
         if not is_finished:
             yield self.message_outputer.output(content="", content_type="Finished")
+
+    def chat_return_dict(self, stream_response: requests.Response):
+        final_output = self.message_outputer.default_data.copy()
+        final_output["choices"] = [
+            {
+                "index": 0,
+                "finish_reason": "stop",
+                "message": {"role": "assistant", "content": ""},
+            }
+        ]
+        final_content = ""
+        for item in self.chat_return_generator(stream_response):
+            try:
+                data = json.loads(item)
+                delta = data["choices"][0]["delta"]
+                delta_content = delta.get("content", "")
+                if delta_content:
+                    final_content += delta_content
+            except Exception as e:
+                logger.warn(e)
+        final_output["choices"][0]["message"]["content"] = final_content.strip()
+        return final_output
