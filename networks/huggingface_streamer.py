@@ -2,8 +2,8 @@ import json
 import re
 import requests
 
+
 from tclogger import logger
-from tiktoken import get_encoding as tiktoken_get_encoding
 from transformers import AutoTokenizer
 
 from constants.models import (
@@ -12,11 +12,11 @@ from constants.models import (
     TOKEN_LIMIT_MAP,
     TOKEN_RESERVED,
 )
-from constants.env import PROXIES
+from constants.envs import PROXIES
 from messagers.message_outputer import OpenaiStreamOutputer
 
 
-class MessageStreamer:
+class HuggingfaceStreamer:
     def __init__(self, model: str):
         if model in MODEL_MAP.keys():
             self.model = model

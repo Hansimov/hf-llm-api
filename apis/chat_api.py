@@ -19,9 +19,8 @@ from constants.envs import CONFIG
 
 from messagers.message_composer import MessageComposer
 from mocks.stream_chat_mocker import stream_chat_mock
-from networks.message_streamer import MessageStreamer
-from tclogger import logger
-from constants.models import AVAILABLE_MODELS_DICTS
+from networks.huggingface_streamer import HuggingfaceStreamer
+from networks.openai_streamer import OpenaiStreamer
 
 
 class ChatAPIApp:
@@ -90,19 +89,8 @@ class ChatAPIApp:
     def chat_completions(
         self, item: ChatCompletionsPostItem, api_key: str = Depends(extract_api_key)
     ):
-        streamer = MessageStreamer(model=item.model)
-        composer = MessageComposer(model=item.model)
-        composer.merge(messages=item.messages)
-        # streamer.chat = stream_chat_mock
-
-        stream_response = streamer.chat_response(
-            prompt=composer.merged_str,
-            temperature=item.temperature,
-            top_p=item.top_p,
-            max_new_tokens=item.max_tokens,
-            api_key=api_key,
-            use_cache=item.use_cache,
-        )
+            streamer = HuggingfaceStreamer(model=item.model)
+            composer = MessageComposer(model=item.model)
         if item.stream:
             event_source_response = EventSourceResponse(
                 streamer.chat_return_generator(stream_response),
