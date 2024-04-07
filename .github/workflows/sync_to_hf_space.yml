@@ -1,7 +1,8 @@
 name: Sync to Hugging Face hub
 on:
   push:
-    branches: [main]
+    paths:
+      - "configs/info.json"
   workflow_dispatch:
 
 jobs:
