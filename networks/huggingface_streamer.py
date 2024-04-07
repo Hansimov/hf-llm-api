@@ -21,7 +21,7 @@ class HuggingfaceStreamer:
         if model in MODEL_MAP.keys():
             self.model = model
         else:
-            self.model = "default"
+            self.model = "mixtral-8x7b"
         self.model_fullname = MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer(model=self.model)
 
