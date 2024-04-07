@@ -4,7 +4,7 @@ from pprint import pprint
 from transformers import AutoTokenizer
 
 from constants.models import AVAILABLE_MODELS, MODEL_MAP
-from utils.logger import logger
+from tclogger import logger
 
 
 class MessageComposer:

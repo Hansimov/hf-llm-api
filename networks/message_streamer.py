@@ -2,6 +2,7 @@ import json
 import re
 import requests
 
+from tclogger import logger
 from tiktoken import get_encoding as tiktoken_get_encoding
 from transformers import AutoTokenizer
 
@@ -11,13 +12,11 @@ from constants.models import (
     TOKEN_LIMIT_MAP,
     TOKEN_RESERVED,
 )
+from constants.env import PROXIES
 from messagers.message_outputer import OpenaiStreamOutputer
-from utils.logger import logger
-from utils.enver import enver
 
 
 class MessageStreamer:
-
     def __init__(self, model: str):
         if model in MODEL_MAP.keys():
             self.model = model
@@ -120,12 +119,11 @@ class MessageStreamer:
         #     ]
 
         logger.back(self.request_url)
-        enver.set_envs(proxies=True)
         stream_response = requests.post(
             self.request_url,
             headers=self.request_headers,
             json=self.request_body,
-            proxies=enver.requests_proxies,
+            proxies=PROXIES,
             stream=True,
         )
         status_code = stream_response.status_code

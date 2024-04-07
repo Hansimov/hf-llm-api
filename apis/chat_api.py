@@ -16,7 +16,7 @@ from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 from messagers.message_composer import MessageComposer
 from mocks.stream_chat_mocker import stream_chat_mock
 from networks.message_streamer import MessageStreamer
-from utils.logger import logger
+from tclogger import logger
 from constants.models import AVAILABLE_MODELS_DICTS
 
 

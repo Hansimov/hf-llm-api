@@ -1,5 +1,5 @@
 import time
-from utils.logger import logger
+from tclogger import logger
 
 
 def stream_chat_mock(*args, **kwargs):
