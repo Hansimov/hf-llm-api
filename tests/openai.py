@@ -7,7 +7,7 @@ from pathlib import Path
 
 from curl_cffi import requests
 from tclogger import logger, OSEnver
-from constants.env import PROXIES
+from constants.envs import PROXIES
 
 
 class OpenaiAPI:

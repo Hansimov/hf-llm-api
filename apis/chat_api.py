@@ -12,6 +12,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
+from tclogger import logger
+
+from constants.models import AVAILABLE_MODELS_DICTS
+from constants.envs import CONFIG
 
 from messagers.message_composer import MessageComposer
 from mocks.stream_chat_mocker import stream_chat_mock
@@ -24,9 +28,9 @@ class ChatAPIApp:
     def __init__(self):
         self.app = FastAPI(
             docs_url="/",
-            title="HuggingFace LLM API",
+            title=CONFIG["app_name"],
             swagger_ui_parameters={"defaultModelsExpandDepth": -1},
-            version="1.0",
+            version=CONFIG["version"],
         )
         self.setup_routes()
 
@@ -152,17 +156,17 @@ class ArgParser(argparse.ArgumentParser):
 
         self.add_argument(
             "-s",
-            "--server",
+            "--host",
             type=str,
-            default="0.0.0.0",
-            help="Server IP for HF LLM Chat API",
+            default=CONFIG["host"],
+            help=f"Host for {CONFIG['app_name']}",
         )
         self.add_argument(
             "-p",
             "--port",
             type=int,
-            default=23333,
-            help="Server Port for HF LLM Chat API",
+            default=CONFIG["port"],
+            help=f"Port for {CONFIG['app_name']}",
         )
 
         self.add_argument(
@@ -181,9 +185,9 @@ app = ChatAPIApp().app
 if __name__ == "__main__":
     args = ArgParser().args
     if args.dev:
-        uvicorn.run("__main__:app", host=args.server, port=args.port, reload=True)
+        uvicorn.run("__main__:app", host=args.host, port=args.port, reload=True)
     else:
-        uvicorn.run("__main__:app", host=args.server, port=args.port, reload=False)
+        uvicorn.run("__main__:app", host=args.host, port=args.port, reload=False)
 
     # python -m apis.chat_api      # [Docker] on product mode
     # python -m apis.chat_api -d   # [Dev]    on develop mode
