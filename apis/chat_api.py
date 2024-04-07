@@ -89,7 +89,7 @@ class ChatAPIApp:
     def chat_completions(
         self, item: ChatCompletionsPostItem, api_key: str = Depends(extract_api_key)
     ):
-        if item.model == "gpt-3.5":
+        if item.model == "gpt-3.5-turbo":
             streamer = OpenaiStreamer()
             stream_response = streamer.chat_response(messages=item.messages)
         else:

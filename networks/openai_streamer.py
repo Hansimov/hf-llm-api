@@ -149,8 +149,10 @@ class OpenaiRequester:
 
 class OpenaiStreamer:
     def __init__(self):
-        self.model = "gpt-3.5"
-        self.message_outputer = OpenaiStreamOutputer(owned_by="openai", model="gpt-3.5")
+        self.model = "gpt-3.5-turbo"
+        self.message_outputer = OpenaiStreamOutputer(
+            owned_by="openai", model="gpt-3.5-turbo"
+        )
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
 
     def count_tokens(self, messages: list[dict]):
