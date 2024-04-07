@@ -22,6 +22,7 @@ TOKEN_LIMIT_MAP = {
     "mistral-7b": 32768,
     "openchat-3.5": 8192,
     "gemma-7b": 8192,
+    "gpt-3.5": 8192,
 }
 
 TOKEN_RESERVED = 20
@@ -33,6 +34,7 @@ AVAILABLE_MODELS = [
     "mistral-7b",
     "openchat-3.5",
     "gemma-7b",
+    "gpt-3.5",
 ]
 
 # https://platform.openai.com/docs/api-reference/models/list
@@ -71,5 +73,12 @@ AVAILABLE_MODELS_DICTS = [
         "object": "model",
         "created": 1700000000,
         "owned_by": "Google",
+    },
+    {
+        "id": "gpt-3.5",
+        "description": "[openai/gpt-3.5-turbo]: https://platform.openai.com/docs/models/gpt-3-5-turbo",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "OpenAI",
     },
 ]

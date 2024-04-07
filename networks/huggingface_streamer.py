@@ -23,7 +23,7 @@ class HuggingfaceStreamer:
         else:
             self.model = "default"
         self.model_fullname = MODEL_MAP[self.model]
-        self.message_outputer = OpenaiStreamOutputer()
+        self.message_outputer = OpenaiStreamOutputer(model=self.model)
 
         if self.model == "gemma-7b":
             # this is not wrong, as repo `google/gemma-7b-it` is gated and must authenticate to access it

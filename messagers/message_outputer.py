@@ -7,13 +7,13 @@ class OpenaiStreamOutputer:
     * https://platform.openai.com/docs/api-reference/chat/create
     """
 
-    def __init__(self):
+    def __init__(self, owned_by="huggingface", model="mixtral-8x7b"):
         self.default_data = {
             "created": 1700000000,
-            "id": "chatcmpl-hugginface",
+            "id": f"chatcmpl-{owned_by}",
             "object": "chat.completion.chunk",
             # "content_type": "Completions",
-            "model": "hugginface",
+            "model": model,
             "choices": [],
         }
 

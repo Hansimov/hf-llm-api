@@ -89,8 +89,22 @@ class ChatAPIApp:
     def chat_completions(
         self, item: ChatCompletionsPostItem, api_key: str = Depends(extract_api_key)
     ):
+        if item.model == "gpt-3.5":
+            streamer = OpenaiStreamer()
+            stream_response = streamer.chat_response(messages=item.messages)
+        else:
             streamer = HuggingfaceStreamer(model=item.model)
             composer = MessageComposer(model=item.model)
+            composer.merge(messages=item.messages)
+            stream_response = streamer.chat_response(
+                prompt=composer.merged_str,
+                temperature=item.temperature,
+                top_p=item.top_p,
+                max_new_tokens=item.max_tokens,
+                api_key=api_key,
+                use_cache=item.use_cache,
+            )
+
         if item.stream:
             event_source_response = EventSourceResponse(
                 streamer.chat_return_generator(stream_response),

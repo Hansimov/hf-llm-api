@@ -1,0 +1,35 @@
+OPENAI_GET_HEADERS = {
+    # "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json",
+    # "Oai-Device-Id": self.uuid,
+    "Oai-Language": "en-US",
+    "Pragma": "no-cache",
+    "Referer": "https://chat.openai.com/",
+    "Sec-Ch-Ua": 'Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+}
+
+
+OPENAI_POST_DATA = {
+    "action": "next",
+    # "messages": self.transform_messages(messages),
+    "parent_message_id": "",
+    "model": "text-davinci-002-render-sha",
+    "timezone_offset_min": -480,
+    "suggestions": [],
+    "history_and_training_disabled": False,
+    "conversation_mode": {"kind": "primary_assistant"},
+    "force_paragen": False,
+    "force_paragen_model_slug": "",
+    "force_nulligen": False,
+    "force_rate_limit": False,
+    # "websocket_request_id": str(uuid.uuid4()),
+}
