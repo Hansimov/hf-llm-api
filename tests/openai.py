@@ -7,9 +7,7 @@ from pathlib import Path
 
 from curl_cffi import requests
 from tclogger import logger, OSEnver
-
-secrets_path = Path(__file__).parents[1] / "secrets.json"
-ENVER = OSEnver(secrets_path)
+from constants.env import PROXIES
 
 
 class OpenaiAPI:
@@ -42,17 +40,6 @@ class OpenaiAPI:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
         }
 
-        http_proxy = ENVER["http_proxy"]
-        if http_proxy:
-            self.requests_proxies = {
-                "http": http_proxy,
-                "https": http_proxy,
-            }
-            logger.note(f"> Using Proxy:", end=" ")
-            logger.mesg(f"{ENVER['http_proxy']}")
-        else:
-            self.requests_proxies = None
-
     def log_request(self, url, method="GET"):
         logger.note(f"> {method}:", end=" ")
         logger.mesg(f"{url}", end=" ")
@@ -83,13 +70,16 @@ class OpenaiAPI:
                     if line:
                         try:
                             data = json.loads(line, strict=False)
-                            role = data["message"]["author"]["role"]
-                            if role != "assistant":
-                                continue
-                            content = data["message"]["content"]["parts"][0]
-                            delta_content = content[self.content_offset :]
-                            self.content_offset = len(content)
-                            logger_func(delta_content, end="")
+                            message_role = data["message"]["author"]["role"]
+                            message_status = data["message"]["status"]
+                            if (
+                                message_role == "assistant"
+                                and message_status == "in_progress"
+                            ):
+                                content = data["message"]["content"]["parts"][0]
+                                delta_content = content[self.content_offset :]
+                                self.content_offset = len(content)
+                                logger_func(delta_content, end="")
                         except Exception as e:
                             logger.warn(e)
             else:
@@ -100,7 +90,7 @@ class OpenaiAPI:
         res = requests.get(
             self.api_models,
             headers=self.requests_headers,
-            proxies=self.requests_proxies,
+            proxies=PROXIES,
             timeout=10,
             impersonate="chrome120",
         )
@@ -111,14 +101,31 @@ class OpenaiAPI:
         res = requests.post(
             self.api_chat_requirements,
             headers=self.requests_headers,
-            proxies=self.requests_proxies,
+            proxies=PROXIES,
             timeout=10,
             impersonate="chrome120",
         )
         self.chat_requirements_token = res.json()["token"]
         self.log_response(res)
 
-    def chat_completions(self, prompt: str):
+    def transform_messages(self, messages: list[dict]):
+        def get_role(role):
+            if role in ["system", "user", "assistant"]:
+                return role
+            else:
+                return "system"
+
+        new_messages = [
+            {
+                "author": {"role": get_role(message["role"])},
+                "content": {"content_type": "text", "parts": [message["content"]]},
+                "metadata": {},
+            }
+            for message in messages
+        ]
+        return new_messages
+
+    def chat_completions(self, messages: list[dict]):
         new_headers = {
             "Accept": "text/event-stream",
             "Openai-Sentinel-Chat-Requirements-Token": self.chat_requirements_token,
@@ -127,14 +134,7 @@ class OpenaiAPI:
         requests_headers.update(new_headers)
         post_data = {
             "action": "next",
-            "messages": [
-                {
-                    "id": self.uuid,
-                    "author": {"role": "user"},
-                    "content": {"content_type": "text", "parts": [prompt]},
-                    "metadata": {},
-                }
-            ],
+            "messages": self.transform_messages(messages),
             "parent_message_id": "",
             "model": "text-davinci-002-render-sha",
             "timezone_offset_min": -480,
@@ -153,7 +153,7 @@ class OpenaiAPI:
             self.api_conversation,
             headers=requests_headers,
             json=post_data,
-            proxies=self.requests_proxies,
+            proxies=PROXIES,
             timeout=10,
             impersonate="chrome120",
             stream=True,
@@ -165,7 +165,16 @@ if __name__ == "__main__":
     api = OpenaiAPI()
     # api.get_models()
     api.auth()
-    prompt = "你的名字？"
-    api.chat_completions(prompt)
+    messages = [
+        {"role": "system", "content": "i am Hansimov"},
+        {"role": "system", "content": "i have a cat named lucky"},
+        {"role": "user", "content": "Repeat my name and my cat's name"},
+        {
+            "role": "assistant",
+            "content": "Your name is Hansimov and your cat's name is Lucky.",
+        },
+        {"role": "user", "content": "summarize our conversation"},
+    ]
+    api.chat_completions(messages)
 
     # python -m tests.openai
