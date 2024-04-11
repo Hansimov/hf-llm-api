@@ -4,9 +4,11 @@ MODEL_MAP = {
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.2",
     "openchat-3.5": "openchat/openchat-3.5-0106",
     "gemma-7b": "google/gemma-7b-it",
+    "command-r-plus": "CohereForAI/c4ai-command-r-plus",
     "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
 }
 
+AVAILABLE_MODELS = list(MODEL_MAP.keys())
 
 STOP_SEQUENCES_MAP = {
     "mixtral-8x7b": "</s>",
@@ -14,6 +16,7 @@ STOP_SEQUENCES_MAP = {
     "mistral-7b": "</s>",
     "openchat-3.5": "<|end_of_turn|>",
     "gemma-7b": "<eos>",
+    "command-r-plus": "<|END_OF_TURN_TOKEN|>",
 }
 
 TOKEN_LIMIT_MAP = {
@@ -23,19 +26,11 @@ TOKEN_LIMIT_MAP = {
     "openchat-3.5": 8192,
     "gemma-7b": 8192,
     "gpt-3.5-turbo": 8192,
+    "command-r-plus": 32768,
 }
 
 TOKEN_RESERVED = 20
 
-
-AVAILABLE_MODELS = [
-    "mixtral-8x7b",
-    "nous-mixtral-8x7b",
-    "mistral-7b",
-    "openchat-3.5",
-    "gemma-7b",
-    "gpt-3.5-turbo",
-]
 
 # https://platform.openai.com/docs/api-reference/models/list
 AVAILABLE_MODELS_DICTS = [
@@ -73,6 +68,13 @@ AVAILABLE_MODELS_DICTS = [
         "object": "model",
         "created": 1700000000,
         "owned_by": "Google",
+    },
+    {
+        "id": "command-r-plus",
+        "description": "[CohereForAI/c4ai-command-r-plus]: https://huggingface.co/CohereForAI/c4ai-command-r-plus",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "CohereForAI",
     },
     {
         "id": "gpt-3.5-turbo",

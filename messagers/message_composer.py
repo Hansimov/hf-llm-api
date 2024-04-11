@@ -151,10 +151,14 @@ class MessageComposer:
         # https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO#prompt-format
         # https://huggingface.co/openchat/openchat-3.5-0106
         # elif self.model in ["openchat-3.5", "nous-mixtral-8x7b"]:
-        else:
-            tokenizer = AutoTokenizer.from_pretrained("openchat/openchat-3.5-0106")
+        elif self.model in ["openchat-3.5", "command-r-plus"]:
+            tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
             self.merged_str = tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
+            )
+        else:
+            self.merged_str = "\n\n".join(
+                [f"{message['role']}: {message['content']}" for message in messages]
             )
 
         return self.merged_str
@@ -164,7 +168,8 @@ if __name__ == "__main__":
     # model = "mixtral-8x7b"
     # model = "nous-mixtral-8x7b"
     # model = "gemma-7b"
-    model = "openchat-3.5"
+    # model = "openchat-3.5"
+    model = "command-r-plus"
     composer = MessageComposer(model)
     messages = [
         {
