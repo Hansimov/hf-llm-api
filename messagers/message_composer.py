@@ -125,7 +125,7 @@ class MessageComposer:
                     )
             self.merged_str_list.append(f"GPT4 Correct Assistant:\n")
             self.merged_str = "\n".join(self.merged_str_list)
-        # https://huggingface.co/google/gemma-7b-it#chat-template
+        # https://huggingface.co/google/gemma-1.1-7b-it#chat-template
         elif self.model in ["gemma-7b"]:
             self.messages = self.concat_messages_by_role(messages)
             self.merged_str_list = []
@@ -147,11 +147,11 @@ class MessageComposer:
                         f"{self.start_of_turn}user\n{content}{self.end_of_turn}"
                     )
             self.merged_str_list.append(f"{self.start_of_turn}model\n")
-            self.merged_str = "\n".join(self.merged_str_list)
+            self.merged_str = "<bos>" + "\n".join(self.merged_str_list)
         # https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO#prompt-format
         # https://huggingface.co/openchat/openchat-3.5-0106
         # elif self.model in ["openchat-3.5", "nous-mixtral-8x7b"]:
-        elif self.model in ["openchat-3.5", "command-r-plus"]:
+        elif self.model in ["openchat-3.5", "command-r-plus", "gemma-7b"]:
             tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
             self.merged_str = tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
@@ -167,9 +167,9 @@ class MessageComposer:
 if __name__ == "__main__":
     # model = "mixtral-8x7b"
     # model = "nous-mixtral-8x7b"
-    # model = "gemma-7b"
+    model = "gemma-7b"
     # model = "openchat-3.5"
-    model = "command-r-plus"
+    # model = "command-r-plus"
     composer = MessageComposer(model)
     messages = [
         {
