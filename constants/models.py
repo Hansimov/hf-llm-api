@@ -4,7 +4,7 @@ MODEL_MAP = {
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.2",
     # "openchat-3.5": "openchat/openchat-3.5-0106",
     "gemma-7b": "google/gemma-1.1-7b-it",
-    # "command-r-plus": "CohereForAI/c4ai-command-r-plus",
+    "command-r-plus": "CohereForAI/c4ai-command-r-plus",
     "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
 }
 
