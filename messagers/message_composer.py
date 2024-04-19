@@ -12,7 +12,7 @@ class MessageComposer:
         if model in AVAILABLE_MODELS:
             self.model = model
         else:
-            self.model = "mixtral-8x7b"
+            self.model = "nous-mixtral-8x7b"
         self.model_fullname = MODEL_MAP[self.model]
         self.system_roles = ["system"]
         self.inst_roles = ["user", "system", "inst"]

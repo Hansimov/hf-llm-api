@@ -7,7 +7,7 @@ MODEL_MAP = {
     "command-r-plus": "CohereForAI/c4ai-command-r-plus",
     "llama3-70b": "meta-llama/Meta-Llama-3-70B-Instruct",
     "zephyr-141b": "HuggingFaceH4/zephyr-orpo-141b-A35b-v0.1",
-    "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+    "default": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
 }
 
 AVAILABLE_MODELS = list(MODEL_MAP.keys())

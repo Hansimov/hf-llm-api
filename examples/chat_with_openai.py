@@ -6,7 +6,7 @@ api_key = "sk-xxxxx"
 
 client = OpenAI(base_url=base_url, api_key=api_key)
 response = client.chat.completions.create(
-    model="mixtral-8x7b",
+    model="nous-mixtral-8x7b",
     messages=[
         {
             "role": "user",

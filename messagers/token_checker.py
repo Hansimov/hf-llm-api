@@ -11,7 +11,7 @@ class TokenChecker:
         if model in MODEL_MAP.keys():
             self.model = model
         else:
-            self.model = "mixtral-8x7b"
+            self.model = "nous-mixtral-8x7b"
 
         self.model_fullname = MODEL_MAP[self.model]
 

@@ -20,7 +20,7 @@ class HuggingchatRequester:
         if model in MODEL_MAP.keys():
             self.model = model
         else:
-            self.model = "mixtral-8x7b"
+            self.model = "nous-mixtral-8x7b"
         self.model_fullname = MODEL_MAP[self.model]
 
     def get_hf_chat_id(self):
@@ -208,7 +208,7 @@ class HuggingchatStreamer:
         if model in MODEL_MAP.keys():
             self.model = model
         else:
-            self.model = "mixtral-8x7b"
+            self.model = "nous-mixtral-8x7b"
         self.model_fullname = MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer(model=self.model)
 

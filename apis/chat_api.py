@@ -59,8 +59,8 @@ class ChatAPIApp:
 
     class ChatCompletionsPostItem(BaseModel):
         model: str = Field(
-            default="mixtral-8x7b",
-            description="(str) `mixtral-8x7b`",
+            default="nous-mixtral-8x7b",
+            description="(str) `nous-mixtral-8x7b`",
         )
         messages: list = Field(
             default=[{"role": "user", "content": "Hello, who are you?"}],

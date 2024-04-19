@@ -8,7 +8,7 @@ chat_api = "http://127.0.0.1:23333"
 api_key = "sk-xxxxx"
 requests_headers = {}
 requests_payload = {
-    "model": "mixtral-8x7b",
+    "model": "nous-mixtral-8x7b",
     "messages": [
         {
             "role": "user",

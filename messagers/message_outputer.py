@@ -7,7 +7,7 @@ class OpenaiStreamOutputer:
     * https://platform.openai.com/docs/api-reference/chat/create
     """
 
-    def __init__(self, owned_by="huggingface", model="mixtral-8x7b"):
+    def __init__(self, owned_by="huggingface", model="nous-mixtral-8x7b"):
         self.default_data = {
             "created": 1700000000,
             "id": f"chatcmpl-{owned_by}",
