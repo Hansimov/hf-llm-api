@@ -21,23 +21,16 @@ from constants.headers import (
     HUGGINGCHAT_SETTINGS_POST_DATA,
 )
 from messagers.message_outputer import OpenaiStreamOutputer
+from messagers.message_composer import MessageComposer
 
 
-class HuggingchatStreamer:
+class HuggingchatRequester:
     def __init__(self, model: str):
         if model in MODEL_MAP.keys():
             self.model = model
         else:
             self.model = "mixtral-8x7b"
         self.model_fullname = MODEL_MAP[self.model]
-        self.message_outputer = OpenaiStreamOutputer(model=self.model)
-        # self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
-
-    # def count_tokens(self, text):
-    #     tokens = self.tokenizer.encode(text)
-    #     token_count = len(tokens)
-    #     logger.note(f"Prompt Token Count: {token_count}")
-    #     return token_count
 
     def get_hf_chat_id(self):
         request_url = "https://huggingface.co/chat/settings"
@@ -63,7 +56,7 @@ class HuggingchatStreamer:
             logger.warn(res.text)
             raise ValueError("Failed to get hf-chat ID!")
 
-    def get_conversation_id(self, preprompt: str = ""):
+    def get_conversation_id(self, system_prompt: str = ""):
         request_url = "https://huggingface.co/chat/conversation"
         request_headers = HUGGINGCHAT_POST_HEADERS
         extra_headers = {
@@ -72,7 +65,7 @@ class HuggingchatStreamer:
         request_headers.update(extra_headers)
         request_body = {
             "model": self.model_fullname,
-            "preprompt": preprompt,
+            "preprompt": system_prompt,
         }
         logger.note(f"> Conversation ID:", end=" ")
 
@@ -176,17 +169,14 @@ class HuggingchatStreamer:
 
         logger.exit_quiet(not verbose)
 
-    def chat_response(
-        self,
-        prompt: str = None,
-        temperature: float = 0.5,
-        top_p: float = 0.95,
-        max_new_tokens: int = None,
-        api_key: str = None,
-        use_cache: bool = False,
-    ):
+    def chat_completions(self, messages: list[dict], iter_lines=False, verbose=False):
+        composer = MessageComposer(model=self.model)
+        system_prompt, input_prompt = composer.decompose_to_system_and_input_prompt(
+            messages
+        )
+
         self.get_hf_chat_id()
-        self.get_conversation_id()
+        self.get_conversation_id(system_prompt=system_prompt)
         message_id = self.get_last_message_id()
 
         request_url = f"https://huggingface.co/chat/conversation/{self.conversation_id}"
@@ -200,7 +190,7 @@ class HuggingchatStreamer:
         request_body = {
             "files": [],
             "id": message_id,
-            "inputs": prompt,
+            "inputs": input_prompt,
             "is_continue": False,
             "is_retry": False,
             "web_search": False,
@@ -214,8 +204,31 @@ class HuggingchatStreamer:
             proxies=PROXIES,
             stream=True,
         )
-        self.log_response(res, stream=True, iter_lines=True, verbose=True)
+        self.log_response(res, stream=True, iter_lines=iter_lines, verbose=verbose)
         return res
+
+
+class HuggingchatStreamer:
+    def __init__(self, model: str):
+        if model in MODEL_MAP.keys():
+            self.model = model
+        else:
+            self.model = "mixtral-8x7b"
+        self.model_fullname = MODEL_MAP[self.model]
+        self.message_outputer = OpenaiStreamOutputer(model=self.model)
+        # self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
+
+    # def count_tokens(self, text):
+    #     tokens = self.tokenizer.encode(text)
+    #     token_count = len(tokens)
+    #     logger.note(f"Prompt Token Count: {token_count}")
+    #     return token_count
+
+    def chat_response(self, messages: list[dict], verbose=False):
+        requester = HuggingchatRequester(model=self.model)
+        return requester.chat_completions(
+            messages=messages, iter_lines=True, verbose=True
+        )
 
     def chat_return_dict(self, stream_response):
         pass
@@ -228,6 +241,16 @@ if __name__ == "__main__":
     # model = "llama3-70b"
     model = "command-r-plus"
     streamer = HuggingchatStreamer(model=model)
-    prompt = "what is your model?"
-    streamer.chat_response(prompt=prompt)
+
+    messages = [
+        {
+            "role": "system",
+            "content": "You are an LLM developed by CloseAI.\nYour name is Hansimov-Copilot.",
+        },
+        {"role": "user", "content": "Hello, what is your role?"},
+        {"role": "assistant", "content": "I am an LLM."},
+        {"role": "user", "content": "What is your name?"},
+    ]
+
+    streamer.chat_response(messages=messages)
     # HF_ENDPOINT=https://hf-mirror.com python -m networks.huggingchat_streamer
