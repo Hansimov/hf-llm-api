@@ -6,6 +6,7 @@ MODEL_MAP = {
     "gemma-7b": "google/gemma-1.1-7b-it",
     "command-r-plus": "CohereForAI/c4ai-command-r-plus",
     "llama3-70b": "meta-llama/Meta-Llama-3-70B-Instruct",
+    "zephyr-141b": "HuggingFaceH4/zephyr-orpo-141b-A35b-v0.1",
     "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
 }
 
@@ -26,9 +27,10 @@ TOKEN_LIMIT_MAP = {
     "mistral-7b": 32768,
     "openchat-3.5": 8192,
     "gemma-7b": 8192,
-    "gpt-3.5-turbo": 8192,
     "command-r-plus": 32768,
     "llama3-70b": 8192,
+    "zephyr-141b": 2048,
+    "gpt-3.5-turbo": 8192,
 }
 
 TOKEN_RESERVED = 20
@@ -71,13 +73,27 @@ AVAILABLE_MODELS_DICTS = [
         "created": 1700000000,
         "owned_by": "Google",
     },
-    # {
-    #     "id": "command-r-plus",
-    #     "description": "[CohereForAI/c4ai-command-r-plus]: https://huggingface.co/CohereForAI/c4ai-command-r-plus",
-    #     "object": "model",
-    #     "created": 1700000000,
-    #     "owned_by": "CohereForAI",
-    # },
+    {
+        "id": "command-r-plus",
+        "description": "[CohereForAI/c4ai-command-r-plus]: https://huggingface.co/CohereForAI/c4ai-command-r-plus",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "CohereForAI",
+    },
+    {
+        "id": "llama3-70b",
+        "description": "[meta-llama/Meta-Llama-3-70B]: https://huggingface.co/meta-llama/Meta-Llama-3-70B",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "Meta",
+    },
+    {
+        "id": "zephyr-141b",
+        "description": "[HuggingFaceH4/zephyr-orpo-141b-A35b-v0.1]: https://huggingface.co/HuggingFaceH4/zephyr-orpo-141b-A35b-v0.1",
+        "object": "model",
+        "created": 1700000000,
+        "owned_by": "Huggingface",
+    },
     {
         "id": "gpt-3.5-turbo",
         "description": "[openai/gpt-3.5-turbo]: https://platform.openai.com/docs/models/gpt-3-5-turbo",
