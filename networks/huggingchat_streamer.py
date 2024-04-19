@@ -24,6 +24,39 @@ from messagers.message_outputer import OpenaiStreamOutputer
 from messagers.message_composer import MessageComposer
 
 
+class TokenChecker:
+    def __init__(self, input_str: str, model: str):
+        self.input_str = input_str
+
+        if model in MODEL_MAP.keys():
+            self.model = model
+        else:
+            self.model = "mixtral-8x7b"
+
+        self.model_fullname = MODEL_MAP[self.model]
+
+        if self.model == "llama3-70b":
+            # As original llama3 repo is gated and requires auth,
+            #   I use NousResearch's version as a workaround
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                "NousResearch/Meta-Llama-3-70B"
+            )
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
+
+    def count_tokens(self):
+        token_count = len(self.tokenizer.encode(self.input_str))
+        logger.note(f"Prompt Token Count: {token_count}")
+        return token_count
+
+    def check_token_limit(self):
+        token_limit = TOKEN_LIMIT_MAP[self.model]
+        token_redundancy = int(token_limit - TOKEN_RESERVED - self.count_tokens())
+        if token_redundancy <= 0:
+            raise ValueError(f"Prompt exceeded token limit: {token_limit}")
+        return True
+
+
 class HuggingchatRequester:
     def __init__(self, model: str):
         if model in MODEL_MAP.keys():
@@ -175,6 +208,9 @@ class HuggingchatRequester:
             messages
         )
 
+        checker = TokenChecker(input_str=system_prompt + input_prompt, model=self.model)
+        checker.check_token_limit()
+
         self.get_hf_chat_id()
         self.get_conversation_id(system_prompt=system_prompt)
         message_id = self.get_last_message_id()
@@ -216,13 +252,6 @@ class HuggingchatStreamer:
             self.model = "mixtral-8x7b"
         self.model_fullname = MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer(model=self.model)
-        # self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
-
-    # def count_tokens(self, text):
-    #     tokens = self.tokenizer.encode(text)
-    #     token_count = len(tokens)
-    #     logger.note(f"Prompt Token Count: {token_count}")
-    #     return token_count
 
     def chat_response(self, messages: list[dict], verbose=False):
         requester = HuggingchatRequester(model=self.model)
@@ -238,10 +267,11 @@ class HuggingchatStreamer:
 
 
 if __name__ == "__main__":
-    # model = "llama3-70b"
-    model = "command-r-plus"
-    streamer = HuggingchatStreamer(model=model)
+    # model = "command-r-plus"
+    model = "llama3-70b"
+    # model = "zephyr-141b"
 
+    streamer = HuggingchatStreamer(model=model)
     messages = [
         {
             "role": "system",
