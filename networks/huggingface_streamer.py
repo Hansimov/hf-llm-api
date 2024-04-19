@@ -2,18 +2,11 @@ import json
 import re
 import requests
 
-
 from tclogger import logger
-from transformers import AutoTokenizer
-
-from constants.models import (
-    MODEL_MAP,
-    STOP_SEQUENCES_MAP,
-    TOKEN_LIMIT_MAP,
-    TOKEN_RESERVED,
-)
+from constants.models import MODEL_MAP, STOP_SEQUENCES_MAP
 from constants.envs import PROXIES
 from messagers.message_outputer import OpenaiStreamOutputer
+from messagers.token_checker import TokenChecker
 
 
 class HuggingfaceStreamer:
@@ -25,13 +18,6 @@ class HuggingfaceStreamer:
         self.model_fullname = MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer(model=self.model)
 
-        if self.model == "gemma-7b":
-            # this is not wrong, as repo `google/gemma-7b-it` is gated and must authenticate to access it
-            # so I use mistral-7b as a fallback
-            self.tokenizer = AutoTokenizer.from_pretrained(MODEL_MAP["mistral-7b"])
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
-
     def parse_line(self, line):
         line = line.decode("utf-8")
         line = re.sub(r"data:\s*", "", line)
@@ -41,12 +27,6 @@ class HuggingfaceStreamer:
         except:
             logger.err(data)
         return content
-
-    def count_tokens(self, text):
-        tokens = self.tokenizer.encode(text)
-        token_count = len(tokens)
-        logger.note(f"Prompt Token Count: {token_count}")
-        return token_count
 
     def chat_response(
         self,
@@ -80,16 +60,12 @@ class HuggingfaceStreamer:
         top_p = max(top_p, 0.01)
         top_p = min(top_p, 0.99)
 
-        token_limit = int(
-            TOKEN_LIMIT_MAP[self.model] - TOKEN_RESERVED - self.count_tokens(prompt)
-        )
-        if token_limit <= 0:
-            raise ValueError("Prompt exceeded token limit!")
+        checker = TokenChecker(input_str=prompt, model=self.model)
 
         if max_new_tokens is None or max_new_tokens <= 0:
-            max_new_tokens = token_limit
+            max_new_tokens = checker.get_token_redundancy()
         else:
-            max_new_tokens = min(max_new_tokens, token_limit)
+            max_new_tokens = min(max_new_tokens, checker.get_token_redundancy())
 
         # References:
         #   huggingface_hub/inference/_client.py:

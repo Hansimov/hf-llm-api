@@ -2,59 +2,15 @@ import copy
 import json
 import re
 import requests
-import uuid
 
-# from curl_cffi import requests
 from tclogger import logger
-from transformers import AutoTokenizer
 
-from constants.models import (
-    MODEL_MAP,
-    STOP_SEQUENCES_MAP,
-    TOKEN_LIMIT_MAP,
-    TOKEN_RESERVED,
-)
+from constants.models import MODEL_MAP
 from constants.envs import PROXIES
-from constants.headers import (
-    REQUESTS_HEADERS,
-    HUGGINGCHAT_POST_HEADERS,
-    HUGGINGCHAT_SETTINGS_POST_DATA,
-)
+from constants.headers import HUGGINGCHAT_POST_HEADERS, HUGGINGCHAT_SETTINGS_POST_DATA
 from messagers.message_outputer import OpenaiStreamOutputer
 from messagers.message_composer import MessageComposer
-
-
-class TokenChecker:
-    def __init__(self, input_str: str, model: str):
-        self.input_str = input_str
-
-        if model in MODEL_MAP.keys():
-            self.model = model
-        else:
-            self.model = "mixtral-8x7b"
-
-        self.model_fullname = MODEL_MAP[self.model]
-
-        if self.model == "llama3-70b":
-            # As original llama3 repo is gated and requires auth,
-            #   I use NousResearch's version as a workaround
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                "NousResearch/Meta-Llama-3-70B"
-            )
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
-
-    def count_tokens(self):
-        token_count = len(self.tokenizer.encode(self.input_str))
-        logger.note(f"Prompt Token Count: {token_count}")
-        return token_count
-
-    def check_token_limit(self):
-        token_limit = TOKEN_LIMIT_MAP[self.model]
-        token_redundancy = int(token_limit - TOKEN_RESERVED - self.count_tokens())
-        if token_redundancy <= 0:
-            raise ValueError(f"Prompt exceeded token limit: {token_limit}")
-        return True
+from messagers.token_checker import TokenChecker
 
 
 class HuggingchatRequester:
