@@ -94,6 +94,58 @@ class HuggingchatStreamer:
         return conversation_id
 
 
+    def log_request(self, url, method="GET"):
+        logger.note(f"> {method}:", end=" ")
+        logger.mesg(f"{url}", end=" ")
+
+    def log_response(
+        self, res: requests.Response, stream=False, iter_lines=False, verbose=False
+    ):
+        status_code = res.status_code
+        status_code_str = f"[{status_code}]"
+
+        if status_code == 200:
+            logger_func = logger.success
+        else:
+            logger_func = logger.warn
+
+        logger_func(status_code_str)
+
+        logger.enter_quiet(not verbose)
+
+        if status_code != 200:
+            logger_func(res.text)
+
+        if stream:
+            if not iter_lines:
+                return
+
+            for line in res.iter_lines():
+                line = line.decode("utf-8")
+                line = re.sub(r"^data:\s*", "", line)
+                line = line.strip()
+                if line:
+                    try:
+                        data = json.loads(line, strict=False)
+                        msg_type = data.get("type")
+                        if msg_type == "status":
+                            msg_status = data.get("status")
+                        elif msg_type == "stream":
+                            content = data.get("token", "")
+                            logger_func(content, end="")
+                        elif msg_type == "finalAnswer":
+                            full_content = data.get("text")
+                            logger.success("\n[Finished]")
+                            break
+                        else:
+                            pass
+                    except Exception as e:
+                        logger.warn(e)
+        else:
+            logger_func(res.json())
+
+        logger.exit_quiet(not verbose)
+
     def chat_response(
         self,
         prompt: str = None,
