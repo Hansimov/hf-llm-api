@@ -92,6 +92,32 @@ class HuggingchatStreamer:
         self.conversation_id = conversation_id
         return conversation_id
 
+    def get_message_id(self):
+        request_url = f"https://huggingface.co/chat/conversation/{self.conversation_id}/__data.json?x-sveltekit-invalidated=11"
+        request_headers = HUGGINGCHAT_POST_HEADERS
+        extra_headers = {
+            "Cookie": f"hf-chat={self.hf_chat_id}",
+        }
+        request_headers.update(extra_headers)
+        logger.note(f"> Message ID:", end=" ")
+
+        message_id = None
+        res = requests.post(
+            request_url,
+            headers=request_headers,
+            proxies=PROXIES,
+            timeout=10,
+        )
+        if res.status_code == 200:
+            data = res.json()
+            # TODO - extract message_id
+
+            logger.success(f"[{message_id}]")
+        else:
+            logger.warn(f"[{res.status_code}]")
+            raise ValueError("Failed to get conversation ID!")
+
+        return message_id
 
     def log_request(self, url, method="GET"):
         logger.note(f"> {method}:", end=" ")
