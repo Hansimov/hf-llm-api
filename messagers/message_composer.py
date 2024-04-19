@@ -163,6 +163,37 @@ class MessageComposer:
 
         return self.merged_str
 
+    def decompose_to_system_and_input_prompt(
+        self, messages: list[dict], append_assistant=True
+    ):
+        system_prompt_list = []
+        user_and_assistant_messages = []
+        for message in messages:
+            role = message["role"]
+            content = message["content"]
+            if role in self.system_roles:
+                system_prompt_list.append(content)
+            else:
+                user_and_assistant_messages.append(message)
+        system_prompt = "\n".join(system_prompt_list)
+
+        input_prompt_list = []
+        input_messages = self.concat_messages_by_role(user_and_assistant_messages)
+        for message in input_messages:
+            role = message["role"]
+            content = message["content"]
+            if role in self.answer_roles:
+                role_content_str = f"`assistant`:\n{content}"
+            else:
+                role_content_str = f"`user`:\n{content}"
+            input_prompt_list.append(role_content_str)
+        input_prompt = "\n\n".join(input_prompt_list)
+
+        if append_assistant:
+            input_prompt += "\n\n`assistant`:"
+
+        return system_prompt, input_prompt
+
 
 if __name__ == "__main__":
     # model = "mixtral-8x7b"
@@ -187,9 +218,17 @@ if __name__ == "__main__":
         #     "content": "How many questions have I asked? Please list them.",
         # },
     ]
-    logger.note(f"model: {composer.model}")
-    merged_str = composer.merge(messages)
-    logger.note("merged_str:")
-    logger.mesg(merged_str)
+    # logger.note(f"model: {composer.model}")
+    # merged_str = composer.merge(messages)
+    # logger.note("merged_str:")
+    # logger.mesg(merged_str)
+
+    system_prompt, input_prompt = composer.decompose_to_system_and_input_prompt(
+        messages
+    )
+    logger.note("system_prompt:")
+    logger.mesg(system_prompt)
+    logger.note("input_prompt:")
+    logger.mesg(input_prompt)
 
     # python -m messagers.message_composer
