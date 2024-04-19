@@ -38,6 +38,7 @@ class HuggingchatRequester:
             json=request_body,
             proxies=PROXIES,
             timeout=10,
+            impersonate="chrome",
         )
         self.hf_chat_id = res.cookies.get("hf-chat")
         if self.hf_chat_id:
