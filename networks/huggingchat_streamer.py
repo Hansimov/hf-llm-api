@@ -165,9 +165,8 @@ class HuggingchatRequester:
         else:
             logger_func = logger.warn
 
-        logger_func(status_code_str)
-
         logger.enter_quiet(not verbose)
+        logger_func(status_code_str)
 
         if status_code != 200:
             logger_func(res.text)
@@ -211,6 +210,7 @@ class HuggingchatRequester:
         checker = TokenChecker(input_str=system_prompt + input_prompt, model=self.model)
         checker.check_token_limit()
 
+        logger.enter_quiet(not verbose)
         self.get_hf_chat_id()
         self.get_conversation_id(system_prompt=system_prompt)
         message_id = self.get_last_message_id()
@@ -232,6 +232,7 @@ class HuggingchatRequester:
             "web_search": False,
         }
         self.log_request(request_url, method="POST")
+        logger.exit_quiet(not verbose)
 
         res = requests.post(
             request_url,
@@ -256,13 +257,50 @@ class HuggingchatStreamer:
     def chat_response(self, messages: list[dict], verbose=False):
         requester = HuggingchatRequester(model=self.model)
         return requester.chat_completions(
-            messages=messages, iter_lines=True, verbose=True
+            messages=messages, iter_lines=False, verbose=verbose
         )
 
-    def chat_return_dict(self, stream_response):
-        pass
+    def chat_return_generator(self, stream_response: requests.Response, verbose=False):
+        is_finished = False
+        for line in stream_response.iter_lines():
+            line = line.decode("utf-8")
+            line = re.sub(r"^data:\s*", "", line)
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line, strict=False)
+                msg_type = data.get("type")
+                if msg_type == "status":
+                    msg_status = data.get("status")
+                    continue
+                elif msg_type == "stream":
+                    content_type = "Completions"
+                    content = data.get("token", "")
+                    if verbose:
+                        logger.success(content, end="")
+                elif msg_type == "finalAnswer":
+                    content_type = "Finished"
+                    content = ""
+                    full_content = data.get("text")
+                    if verbose:
+                        logger.success("\n[Finished]")
+                    is_finished = True
+                    break
+                else:
+                    continue
+            except Exception as e:
+                logger.warn(e)
 
-    def chat_return_generator(self, stream_response):
+            output = self.message_outputer.output(
+                content=content, content_type=content_type
+            )
+            yield output
+
+        if not is_finished:
+            yield self.message_outputer.output(content="", content_type="Finished")
+
+    def chat_return_dict(self, stream_response):
         pass
 
 
