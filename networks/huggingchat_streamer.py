@@ -31,7 +31,6 @@ class HuggingchatStreamer:
             self.model = "mixtral-8x7b"
         self.model_fullname = MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer(model=self.model)
-        # export HF_ENDPOINT=https://hf-mirror.com
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
 
     def count_tokens(self, text):
@@ -155,7 +154,37 @@ class HuggingchatStreamer:
         api_key: str = None,
         use_cache: bool = False,
     ):
-        pass
+        self.get_hf_chat_id()
+        self.get_conversation_id()
+        message_id = self.get_message_id()
+
+        request_url = f"https://huggingface.co/chat/conversation/{self.conversation_id}"
+        request_headers = copy.deepcopy(HUGGINGCHAT_POST_HEADERS)
+        extra_headers = {
+            "Content-Type": "text/event-stream",
+            "Referer": request_url,
+            "Cookie": f"hf-chat={self.hf_chat_id}",
+        }
+        request_headers.update(extra_headers)
+        request_body = {
+            "files": [],
+            "id": message_id,
+            "inputs": prompt,
+            "is_continue": False,
+            "is_retry": False,
+            "web_search": False,
+        }
+        self.log_request(request_url, method="POST")
+
+        res = requests.post(
+            request_url,
+            headers=request_headers,
+            json=request_body,
+            proxies=PROXIES,
+            stream=True,
+        )
+        self.log_response(res, stream=True, iter_lines=True, verbose=True)
+        return res
 
     def chat_return_dict(self, stream_response):
         pass
@@ -166,5 +195,6 @@ class HuggingchatStreamer:
 
 if __name__ == "__main__":
     streamer = HuggingchatStreamer(model="mixtral-8x7b")
-    conversation_id = streamer.get_conversation_id()
-    # python -m networks.huggingchat_streamer
+    prompt = "who are you?"
+    streamer.chat_response(prompt=prompt)
+    # HF_ENDPOINT=https://hf-mirror.com python -m networks.huggingchat_streamer
