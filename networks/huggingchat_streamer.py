@@ -31,13 +31,13 @@ class HuggingchatStreamer:
             self.model = "mixtral-8x7b"
         self.model_fullname = MODEL_MAP[self.model]
         self.message_outputer = OpenaiStreamOutputer(model=self.model)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
+        # self.tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
 
-    def count_tokens(self, text):
-        tokens = self.tokenizer.encode(text)
-        token_count = len(tokens)
-        logger.note(f"Prompt Token Count: {token_count}")
-        return token_count
+    # def count_tokens(self, text):
+    #     tokens = self.tokenizer.encode(text)
+    #     token_count = len(tokens)
+    #     logger.note(f"Prompt Token Count: {token_count}")
+    #     return token_count
 
     def get_hf_chat_id(self):
         request_url = "https://huggingface.co/chat/settings"
@@ -92,7 +92,7 @@ class HuggingchatStreamer:
         self.conversation_id = conversation_id
         return conversation_id
 
-    def get_message_id(self):
+    def get_last_message_id(self):
         request_url = f"https://huggingface.co/chat/conversation/{self.conversation_id}/__data.json?x-sveltekit-invalidated=11"
         request_headers = HUGGINGCHAT_POST_HEADERS
         extra_headers = {
@@ -109,9 +109,14 @@ class HuggingchatStreamer:
             timeout=10,
         )
         if res.status_code == 200:
-            data = res.json()
-            # TODO - extract message_id
-
+            data = res.json()["nodes"][1]["data"]
+            # find the last element which matches the format of uuid4
+            uuid_pattern = re.compile(
+                r"^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$"
+            )
+            for item in data:
+                if type(item) == str and uuid_pattern.match(item):
+                    message_id = item
             logger.success(f"[{message_id}]")
         else:
             logger.warn(f"[{res.status_code}]")
@@ -182,7 +187,7 @@ class HuggingchatStreamer:
     ):
         self.get_hf_chat_id()
         self.get_conversation_id()
-        message_id = self.get_message_id()
+        message_id = self.get_last_message_id()
 
         request_url = f"https://huggingface.co/chat/conversation/{self.conversation_id}"
         request_headers = copy.deepcopy(HUGGINGCHAT_POST_HEADERS)
@@ -220,7 +225,9 @@ class HuggingchatStreamer:
 
 
 if __name__ == "__main__":
-    streamer = HuggingchatStreamer(model="mixtral-8x7b")
-    prompt = "who are you?"
+    # model = "llama3-70b"
+    model = "command-r-plus"
+    streamer = HuggingchatStreamer(model=model)
+    prompt = "what is your model?"
     streamer.chat_response(prompt=prompt)
     # HF_ENDPOINT=https://hf-mirror.com python -m networks.huggingchat_streamer

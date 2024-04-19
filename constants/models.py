@@ -5,6 +5,7 @@ MODEL_MAP = {
     # "openchat-3.5": "openchat/openchat-3.5-0106",
     "gemma-7b": "google/gemma-1.1-7b-it",
     "command-r-plus": "CohereForAI/c4ai-command-r-plus",
+    "llama3-70b": "meta-llama/Meta-Llama-3-70B-Instruct",
     "default": "mistralai/Mixtral-8x7B-Instruct-v0.1",
 }
 
@@ -27,6 +28,7 @@ TOKEN_LIMIT_MAP = {
     "gemma-7b": 8192,
     "gpt-3.5-turbo": 8192,
     "command-r-plus": 32768,
+    "llama3-70b": 8192,
 }
 
 TOKEN_RESERVED = 20
