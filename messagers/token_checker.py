@@ -40,5 +40,7 @@ class TokenChecker:
 
     def check_token_limit(self):
         if self.get_token_redundancy() <= 0:
-            raise ValueError(f"Prompt exceeded token limit: {self.get_token_limit()}")
+            raise ValueError(
+                f"Prompt exceeded token limit: {self.count_tokens()} > {self.get_token_limit()}"
+            )
         return True

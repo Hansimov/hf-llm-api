@@ -1,7 +1,9 @@
 import copy
 import json
 import re
+
 import requests
+from curl_cffi import requests as cffi_requests
 
 from tclogger import logger
 
@@ -30,7 +32,7 @@ class HuggingchatRequester:
         request_body.update(extra_body)
         logger.note(f"> hf-chat ID:", end=" ")
 
-        res = requests.post(
+        res = cffi_requests.post(
             request_url,
             headers=HUGGINGCHAT_POST_HEADERS,
             json=request_body,

@@ -171,18 +171,21 @@ class OpenaiStreamer:
 
     def check_token_limit(self, messages: list[dict]):
         token_limit = TOKEN_LIMIT_MAP[self.model]
-        token_redundancy = int(
-            token_limit - TOKEN_RESERVED - self.count_tokens(messages)
-        )
+        token_count = self.count_tokens(messages)
+        token_redundancy = int(token_limit - TOKEN_RESERVED - token_count)
         if token_redundancy <= 0:
-            raise ValueError(f"Prompt exceeded token limit: {token_limit}")
+            raise ValueError(
+                f"Prompt exceeded token limit: {token_count} > {token_limit}"
+            )
         return True
 
-    def chat_response(self, messages: list[dict]):
+    def chat_response(self, messages: list[dict], verbose=False):
         self.check_token_limit(messages)
+        logger.enter_quiet(not verbose)
         requester = OpenaiRequester()
         requester.auth()
-        return requester.chat_completions(messages, verbose=False)
+        logger.exit_quiet(not verbose)
+        return requester.chat_completions(messages, verbose=verbose)
 
     def chat_return_generator(self, stream_response: requests.Response, verbose=False):
         content_offset = 0
