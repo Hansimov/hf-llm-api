@@ -300,8 +300,27 @@ class HuggingchatStreamer:
         if not is_finished:
             yield self.message_outputer.output(content="", content_type="Finished")
 
-    def chat_return_dict(self, stream_response):
-        pass
+    def chat_return_dict(self, stream_response: requests.Response):
+        final_output = self.message_outputer.default_data.copy()
+        final_output["choices"] = [
+            {
+                "index": 0,
+                "finish_reason": "stop",
+                "message": {"role": "assistant", "content": ""},
+            }
+        ]
+        final_content = ""
+        for item in self.chat_return_generator(stream_response):
+            try:
+                data = json.loads(item)
+                delta = data["choices"][0]["delta"]
+                delta_content = delta.get("content", "")
+                if delta_content:
+                    final_content += delta_content
+            except Exception as e:
+                logger.warn(e)
+        final_output["choices"][0]["message"]["content"] = final_content.strip()
+        return final_output
 
 
 if __name__ == "__main__":
