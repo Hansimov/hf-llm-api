@@ -46,7 +46,7 @@ class HuggingchatRequester:
         else:
             logger.warn(f"[{res.status_code}]")
             logger.warn(res.text)
-            raise ValueError("Failed to get hf-chat ID!")
+            raise ValueError(f"Failed to get hf-chat ID: {res.text}")
 
     def get_conversation_id(self, system_prompt: str = ""):
         request_url = "https://huggingface.co/chat/conversation"
@@ -105,7 +105,7 @@ class HuggingchatRequester:
             logger.success(f"[{message_id}]")
         else:
             logger.warn(f"[{res.status_code}]")
-            raise ValueError("Failed to get conversation ID!")
+            raise ValueError("Failed to get message ID!")
 
         return message_id
 
@@ -169,7 +169,6 @@ class HuggingchatRequester:
         checker = TokenChecker(input_str=system_prompt + input_prompt, model=self.model)
         checker.check_token_limit()
 
-        logger.enter_quiet(not verbose)
         self.get_hf_chat_id()
         self.get_conversation_id(system_prompt=system_prompt)
         message_id = self.get_last_message_id()
@@ -191,7 +190,6 @@ class HuggingchatRequester:
             "web_search": False,
         }
         self.log_request(request_url, method="POST")
-        logger.exit_quiet(not verbose)
 
         res = requests.post(
             request_url,
