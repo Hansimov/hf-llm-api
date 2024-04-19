@@ -224,6 +224,9 @@ class HuggingchatStreamer:
             line = line.strip()
             if not line:
                 continue
+
+            content = ""
+            content_type = "Completions"
             try:
                 data = json.loads(line, strict=False)
                 msg_type = data.get("type")

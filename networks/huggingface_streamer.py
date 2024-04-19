@@ -22,6 +22,7 @@ class HuggingfaceStreamer:
         line = line.decode("utf-8")
         line = re.sub(r"data:\s*", "", line)
         data = json.loads(line)
+        content = ""
         try:
             content = data["token"]["text"]
         except:

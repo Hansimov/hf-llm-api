@@ -203,6 +203,7 @@ class OpenaiStreamer:
                 is_finished = True
             else:
                 content_type = "Completions"
+                delta_content = ""
                 try:
                     data = json.loads(line, strict=False)
                     message_role = data["message"]["author"]["role"]
