@@ -12,6 +12,8 @@ MODEL_MAP = {
 
 AVAILABLE_MODELS = list(MODEL_MAP.keys())
 
+PRO_MODELS = ["command-r-plus", "llama3-70b", "zephyr-141b"]
+
 STOP_SEQUENCES_MAP = {
     "mixtral-8x7b": "</s>",
     "nous-mixtral-8x7b": "<|im_end|>",
