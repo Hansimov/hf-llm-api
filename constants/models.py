@@ -18,7 +18,7 @@ STOP_SEQUENCES_MAP = {
     "mixtral-8x7b": "</s>",
     "nous-mixtral-8x7b": "<|im_end|>",
     "mistral-7b": "</s>",
-    "openchat-3.5": "<|end_of_turn|>",
+    # "openchat-3.5": "<|end_of_turn|>",
     "gemma-7b": "<eos>",
     "command-r-plus": "<|END_OF_TURN_TOKEN|>",
 }
@@ -27,7 +27,7 @@ TOKEN_LIMIT_MAP = {
     "mixtral-8x7b": 32768,
     "nous-mixtral-8x7b": 32768,
     "mistral-7b": 32768,
-    "openchat-3.5": 8192,
+    # "openchat-3.5": 8192,
     "gemma-7b": 8192,
     "command-r-plus": 32768,
     "llama3-70b": 8192,
