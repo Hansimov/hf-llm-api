@@ -1,8 +1,10 @@
-import json
 import base64
+from hashlib import sha3_512
+import json
 import random
+
 from datetime import datetime, timedelta, timezone
-from Crypto.Hash import SHA3_512
+
 from constants.headers import OPENAI_GET_HEADERS
 
 
@@ -40,10 +42,10 @@ class ProofWorker:
             config[3] = i
             json_str = json.dumps(config)
             base = base64.b64encode(json_str.encode()).decode()
-            hasher = SHA3_512.new()
+            hasher = sha3_512()
             hasher.update((seed + base).encode())
-            hash = hasher.digest()
-            if hash.hex()[:diff_len] <= difficulty:
+            hash = hasher.digest().hex()
+            if hash[:diff_len] <= difficulty:
                 return "gAAAAAB" + base
         self.proof_token = (
             self.proof_token_prefix + base64.b64encode(seed.encode()).decode()
@@ -56,4 +58,4 @@ if __name__ == "__main__":
     worker = ProofWorker()
     proof_token = worker.calc_proof_token(seed, difficulty)
     print(f"proof_token: {proof_token}")
-    # python -m networks.proof_of_work
+    # python -m networks.proof_worker
