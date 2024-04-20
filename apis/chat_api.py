@@ -7,7 +7,7 @@ import uvicorn
 from pathlib import Path
 from typing import Union
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
@@ -15,10 +15,12 @@ from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 from tclogger import logger
 
 from constants.models import AVAILABLE_MODELS_DICTS, PRO_MODELS
-from constants.envs import CONFIG
+from constants.envs import CONFIG, SECRETS
+from networks.exceptions import HfApiException, INVALID_API_KEY_ERROR
 
 from messagers.message_composer import MessageComposer
 from mocks.stream_chat_mocker import stream_chat_mock
+
 from networks.huggingface_streamer import HuggingfaceStreamer
 from networks.huggingchat_streamer import HuggingchatStreamer
 from networks.openai_streamer import OpenaiStreamer
@@ -38,26 +40,31 @@ class ChatAPIApp:
         return {"object": "list", "data": AVAILABLE_MODELS_DICTS}
 
     def extract_api_key(
-        credentials: HTTPAuthorizationCredentials = Depends(
-            HTTPBearer(auto_error=False)
-        ),
+        credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
     ):
         api_key = None
         if credentials:
             api_key = credentials.credentials
-        else:
-            api_key = os.getenv("HF_TOKEN")
+        env_api_key = SECRETS["HF_LLM_API_KEY"]
+        return api_key
 
-        if api_key:
-            if api_key.startswith("hf_"):
-                return api_key
-            else:
-                logger.warn(f"Invalid HF Token!")
-        else:
-            logger.warn("Not provide HF Token!")
-        return None
+    def auth_api_key(self, api_key: str):
+        env_api_key = SECRETS["HF_LLM_API_KEY"]
+
+        # require no api_key
+        if not env_api_key:
+            return None
+        # user provides HF_TOKEN
+        if api_key and api_key.startswith("hf_"):
+            return api_key
+        # user provides correct API_KEY
+        if str(api_key) == str(env_api_key):
+            return None
+
+        raise INVALID_API_KEY_ERROR
 
     class ChatCompletionsPostItem(BaseModel):
+
         model: str = Field(
             default="nous-mixtral-8x7b",
             description="(str) `nous-mixtral-8x7b`",
@@ -90,38 +97,45 @@ class ChatAPIApp:
     def chat_completions(
         self, item: ChatCompletionsPostItem, api_key: str = Depends(extract_api_key)
     ):
-        if item.model == "gpt-3.5-turbo":
-            streamer = OpenaiStreamer()
-            stream_response = streamer.chat_response(messages=item.messages)
-        elif item.model in PRO_MODELS:
-            streamer = HuggingchatStreamer(model=item.model)
-            stream_response = streamer.chat_response(
-                messages=item.messages,
-            )
-        else:
-            streamer = HuggingfaceStreamer(model=item.model)
-            composer = MessageComposer(model=item.model)
-            composer.merge(messages=item.messages)
-            stream_response = streamer.chat_response(
-                prompt=composer.merged_str,
-                temperature=item.temperature,
-                top_p=item.top_p,
-                max_new_tokens=item.max_tokens,
-                api_key=api_key,
-                use_cache=item.use_cache,
-            )
+        try:
+            api_key = self.auth_api_key(api_key)
 
-        if item.stream:
-            event_source_response = EventSourceResponse(
-                streamer.chat_return_generator(stream_response),
-                media_type="text/event-stream",
-                ping=2000,
-                ping_message_factory=lambda: ServerSentEvent(**{"comment": ""}),
-            )
-            return event_source_response
-        else:
-            data_response = streamer.chat_return_dict(stream_response)
-            return data_response
+            if item.model == "gpt-3.5-turbo":
+                streamer = OpenaiStreamer()
+                stream_response = streamer.chat_response(messages=item.messages)
+            elif item.model in PRO_MODELS:
+                streamer = HuggingchatStreamer(model=item.model)
+                stream_response = streamer.chat_response(
+                    messages=item.messages,
+                )
+            else:
+                streamer = HuggingfaceStreamer(model=item.model)
+                composer = MessageComposer(model=item.model)
+                composer.merge(messages=item.messages)
+                stream_response = streamer.chat_response(
+                    prompt=composer.merged_str,
+                    temperature=item.temperature,
+                    top_p=item.top_p,
+                    max_new_tokens=item.max_tokens,
+                    api_key=api_key,
+                    use_cache=item.use_cache,
+                )
+
+            if item.stream:
+                event_source_response = EventSourceResponse(
+                    streamer.chat_return_generator(stream_response),
+                    media_type="text/event-stream",
+                    ping=2000,
+                    ping_message_factory=lambda: ServerSentEvent(**{"comment": ""}),
+                )
+                return event_source_response
+            else:
+                data_response = streamer.chat_return_dict(stream_response)
+                return data_response
+        except HfApiException as e:
+            raise HTTPException(status_code=e.status_code, detail=e.detail)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     def get_readme(self):
         readme_path = Path(__file__).parents[1] / "README.md"
