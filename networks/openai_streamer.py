@@ -12,6 +12,7 @@ from constants.headers import OPENAI_GET_HEADERS, OPENAI_POST_DATA
 from constants.models import TOKEN_LIMIT_MAP, TOKEN_RESERVED
 
 from messagers.message_outputer import OpenaiStreamOutputer
+from networks.proof_worker import ProofWorker
 
 
 class OpenaiRequester:
@@ -31,9 +32,10 @@ class OpenaiRequester:
         }
         self.requests_headers.update(extra_headers)
 
-    def log_request(self, url, method="GET"):
-        logger.note(f"> {method}:", end=" ")
-        logger.mesg(f"{url}", end=" ")
+    def log_request(self, url, method="GET", verbose=False):
+        if verbose:
+            logger.note(f"> {method}:", end=" ")
+            logger.mesg(f"{url}", end=" ")
 
     def log_response(
         self, res: requests.Response, stream=False, iter_lines=False, verbose=False
@@ -104,7 +106,10 @@ class OpenaiRequester:
             timeout=10,
             impersonate="chrome120",
         )
-        self.chat_requirements_token = res.json()["token"]
+        data = res.json()
+        self.chat_requirements_token = data["token"]
+        self.chat_requirements_seed = data["proofofwork"]["seed"]
+        self.chat_requirements_difficulty = data["proofofwork"]["difficulty"]
         self.log_response(res)
 
     def transform_messages(self, messages: list[dict]):
@@ -124,10 +129,14 @@ class OpenaiRequester:
         ]
         return new_messages
 
-    def chat_completions(self, messages: list[dict], verbose=False):
+    def chat_completions(self, messages: list[dict], iter_lines=False, verbose=False):
+        proof_token = ProofWorker().calc_proof_token(
+            self.chat_requirements_seed, self.chat_requirements_difficulty
+        )
         extra_headers = {
             "Accept": "text/event-stream",
             "Openai-Sentinel-Chat-Requirements-Token": self.chat_requirements_token,
+            "Openai-Sentinel-Proof-Token": proof_token,
         }
         requests_headers = copy.deepcopy(self.requests_headers)
         requests_headers.update(extra_headers)
@@ -150,7 +159,7 @@ class OpenaiRequester:
             impersonate="chrome120",
             stream=True,
         )
-        self.log_response(res, stream=True, iter_lines=False)
+        self.log_response(res, stream=True, iter_lines=iter_lines, verbose=verbose)
         return res
 
 
@@ -179,13 +188,15 @@ class OpenaiStreamer:
             )
         return True
 
-    def chat_response(self, messages: list[dict], verbose=False):
+    def chat_response(self, messages: list[dict], iter_lines=False, verbose=False):
         self.check_token_limit(messages)
         logger.enter_quiet(not verbose)
         requester = OpenaiRequester()
         requester.auth()
         logger.exit_quiet(not verbose)
-        return requester.chat_completions(messages, verbose=verbose)
+        return requester.chat_completions(
+            messages=messages, iter_lines=iter_lines, verbose=verbose
+        )
 
     def chat_return_generator(self, stream_response: requests.Response, verbose=False):
         content_offset = 0
@@ -253,3 +264,19 @@ class OpenaiStreamer:
                 logger.warn(e)
         final_output["choices"][0]["message"]["content"] = final_content.strip()
         return final_output
+
+
+if __name__ == "__main__":
+    streamer = OpenaiStreamer()
+    messages = [
+        {
+            "role": "system",
+            "content": "You are an LLM developed by Hansimov-CORP.\nYour name is Hansimov-Copilot.",
+        },
+        {"role": "user", "content": "Hello, what is your role?"},
+        {"role": "assistant", "content": "I am an LLM."},
+        {"role": "user", "content": "What is your name?"},
+    ]
+
+    streamer.chat_response(messages=messages, iter_lines=True, verbose=True)
+    # python -m networks.openai_streamer
