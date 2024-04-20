@@ -32,10 +32,9 @@ class OpenaiRequester:
         }
         self.requests_headers.update(extra_headers)
 
-    def log_request(self, url, method="GET", verbose=False):
-        if verbose:
-            logger.note(f"> {method}:", end=" ")
-            logger.mesg(f"{url}", end=" ")
+    def log_request(self, url, method="GET"):
+        logger.note(f"> {method}:", end=" ")
+        logger.mesg(f"{url}", end=" ")
 
     def log_response(
         self, res: requests.Response, stream=False, iter_lines=False, verbose=False
