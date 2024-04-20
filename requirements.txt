@@ -5,6 +5,7 @@ httpx
 jinja2
 markdown2[all]
 openai
+pycrypto
 pydantic
 requests
 sse_starlette
