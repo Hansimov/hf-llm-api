@@ -165,6 +165,8 @@ class HuggingfaceStreamer:
             content_type = "Completions"
             if line_count == 1:
                 content = content.lstrip()
+
+            content = content.replace(self.stop_sequences, "")
             logger.back(content, end="")
 
             output = self.message_outputer.output(
