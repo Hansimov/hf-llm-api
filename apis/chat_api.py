@@ -64,7 +64,6 @@ class ChatAPIApp:
         raise INVALID_API_KEY_ERROR
 
     class ChatCompletionsPostItem(BaseModel):
-
         model: str = Field(
             default="nous-mixtral-8x7b",
             description="(str) `nous-mixtral-8x7b`",
