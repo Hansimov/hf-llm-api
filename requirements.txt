@@ -5,8 +5,10 @@ httpx
 jinja2
 markdown2[all]
 openai
+protobuf
 pydantic
 requests
+sentencepiece
 sse_starlette
 termcolor
 tclogger

@@ -3,8 +3,9 @@ on:
   push:
     paths:
       - "configs/config.json"
-      - "./Dockerfile"
+      - "Dockerfile"
       - ".github/workflows/sync_to_hf_space.yml"
+      - "requirements.txt"
   workflow_dispatch:
 
 jobs:
