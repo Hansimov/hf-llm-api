@@ -152,7 +152,10 @@ class MessageComposer:
         # https://huggingface.co/openchat/openchat-3.5-0106
         # https://huggingface.co/01-ai/Yi-1.5-34B-Chat
         elif self.model in ["openchat-3.5", "command-r-plus", "gemma-7b", "yi-1.5-34b"]:
-            tokenizer = AutoTokenizer.from_pretrained(self.model_fullname)
+            # https://discuss.huggingface.co/t/error-with-new-tokenizers-urgent/2847/5
+            tokenizer = AutoTokenizer.from_pretrained(
+                self.model_fullname, use_fast=False
+            )
             self.merged_str = tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
             )

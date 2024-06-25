@@ -157,15 +157,15 @@ class HuggingfaceStreamer:
 
             content = self.parse_line(line)
 
-            if content.strip() == self.stop_sequences:
-                content_type = "Finished"
-                logger.success("\n[Finished]")
-                is_finished = True
-            else:
-                content_type = "Completions"
-                if line_count == 1:
-                    content = content.lstrip()
-                logger.back(content, end="")
+            # if content.strip() == self.stop_sequences:
+            #     content_type = "Finished"
+            #     logger.success("\n[Finished]")
+            #     is_finished = True
+            # else:
+            content_type = "Completions"
+            if line_count == 1:
+                content = content.lstrip()
+            logger.back(content, end="")
 
             output = self.message_outputer.output(
                 content=content, content_type=content_type
